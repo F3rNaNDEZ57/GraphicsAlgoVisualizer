@@ -12,7 +12,7 @@ def interpret_pseudocode(pseudocode, xl, yl, xr, yr, m, b):
     pseudocode = pseudocode.strip()
     pseudocode = pseudocode.replace('PlotPixel', 'set_pixel')
     pseudocode = pseudocode.replace(';', '')
-    
+
     pseudocode_lines = pseudocode.split('\n')
     python_code = f"x = {xl}\nxl = {xl}\nyl = {yl}\nxr = {xr}\nyr = {yr}\nm = {m}\nb = {b}\n"
     indent_level = 0
@@ -20,8 +20,13 @@ def interpret_pseudocode(pseudocode, xl, yl, xr, yr, m, b):
     for line in pseudocode_lines:
         stripped_line = line.strip()
         if 'while' in stripped_line:
-            condition = re.findall(r'\((.*?)\)', stripped_line)[0]
-            python_code += '    ' * indent_level + f'while {condition}:\n'
+            condition = re.findall(r'\((.*?)\)', stripped_line)
+            if condition:
+                python_code += '    ' * indent_level + f'while {condition[0]}:\n'
+            elif 'True' in stripped_line:
+                python_code += '    ' * indent_level + 'while True:\n'
+            else:
+                return "", "Error: Invalid while loop condition."
             indent_level += 1
         elif '}' in stripped_line:
             indent_level -= 1
@@ -33,7 +38,7 @@ def interpret_pseudocode(pseudocode, xl, yl, xr, yr, m, b):
             else:
                 python_code += '    ' * indent_level + f'{stripped_line}\n'
     
-    return python_code
+    return python_code, None
 
 def run_code():
     try:
@@ -53,7 +58,12 @@ def run_code():
     terminal.insert(tk.END, f"Calculated values: m = {m}, b = {b}\n")
 
     pseudocode = code_input.get("1.0", tk.END)
-    python_code = interpret_pseudocode(pseudocode, xl, yl, xr, yr, m, b)
+    python_code, error = interpret_pseudocode(pseudocode, xl, yl, xr, yr, m, b)
+    
+    if error:
+        terminal.insert(tk.END, f"{error}\n")
+        return
+
     terminal.insert(tk.END, f"Generated Python code:\n{python_code}\n")  # Debugging line to show generated code
 
     local_vars = {
@@ -68,6 +78,10 @@ def run_code():
 
 def clear_grid_callback():
     clear_grid()
+    clear_terminal()
+
+def clear_terminal():
+    terminal.delete(1.0, tk.END)
 
 def quit_callback():
     pygame.quit()
@@ -118,8 +132,8 @@ code_input.pack()
 run_button = tk.Button(root, text="Run Code", command=run_code)
 run_button.pack()
 
-# Create a button to clear the grid
-clear_button = tk.Button(root, text="Clear Grid", command=clear_grid_callback)
+# Create a button to clear the grid and terminal
+clear_button = tk.Button(root, text="Clear Grid and Terminal", command=clear_grid_callback)
 clear_button.pack()
 
 # Create a button to quit the application
