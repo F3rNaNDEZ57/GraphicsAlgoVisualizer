@@ -1,0 +1,16 @@
+NAME = "Bubble Sort"
+
+DEFAULT_VALUES = [8, 3, 9, 1, 6, 4, 7, 2, 5]
+
+SOURCE = """\
+n = Length()
+i = 0
+while i < n - 1:
+    j = 0
+    while j < n - i - 1:
+        Compare(j, j + 1)
+        if Value(j) > Value(j + 1):
+            Swap(j, j + 1)
+        j = j + 1
+    i = i + 1
+"""
