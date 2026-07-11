@@ -45,6 +45,12 @@ class GraphCanvas:
     def node_count(self) -> int:
         return len(self.positions)
 
+    def get_start(self) -> int:
+        return self.start
+
+    def get_goal(self) -> int:
+        return self.goal
+
     def visit(self, node: int) -> None:
         node = int(node)
         if node in (self.start, self.goal):

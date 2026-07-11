@@ -88,11 +88,23 @@ _UNARYOPS: dict[type, Any] = {
 class Interpreter:
     """Parses and runs one pseudocode source against a Canvas."""
 
-    def __init__(self, source: str, canvas: Any, step_budget: int = DEFAULT_STEP_BUDGET):
+    def __init__(
+        self,
+        source: str,
+        canvas: Any,
+        viz_builtins: dict[str, str] | None = None,
+        plain_builtins: dict[str, str] | None = None,
+        step_budget: int = DEFAULT_STEP_BUDGET,
+    ):
         self.canvas = canvas
         self.env: dict[str, Any] = {}
         self.step_budget = step_budget
         self._statements_since_yield = 0
+        # Per-canvas-type builtin maps; None falls back to
+        # builtins_registry's defaults, which is all the three built-in
+        # canvas types need today (their names don't collide).
+        self._viz_builtins = viz_builtins
+        self._plain_builtins = plain_builtins
         try:
             self.tree = ast.parse(source, mode="exec")
         except SyntaxError as exc:
@@ -180,7 +192,7 @@ class Interpreter:
         name = self._call_name(call)
         args = [self._eval_expr(a) for a in call.args]
         kwargs = {kw.arg: self._eval_expr(kw.value) for kw in call.keywords}
-        builtin = resolve_builtin(name, self.canvas)
+        builtin = resolve_builtin(name, self.canvas, self._viz_builtins, self._plain_builtins)
         builtin.invoke(*args, **kwargs)
         if builtin.is_viz:
             yield StepEvent(action=name, args=tuple(args), lineno=call.lineno)
@@ -241,7 +253,7 @@ class Interpreter:
 
     def _eval_call(self, call: ast.Call) -> Any:
         name = self._call_name(call)
-        builtin = resolve_builtin(name, self.canvas)
+        builtin = resolve_builtin(name, self.canvas, self._viz_builtins, self._plain_builtins)
         if builtin.is_viz:
             raise PseudocodeError(
                 f"'{name}' is a visualization action and cannot be used inside an expression",

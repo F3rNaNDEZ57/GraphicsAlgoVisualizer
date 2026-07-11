@@ -45,17 +45,33 @@ class ResolvedBuiltin:
     is_viz: bool
 
 
-def resolve_builtin(name: str, canvas: Any) -> ResolvedBuiltin:
-    if name in VIZ_BUILTIN_METHODS:
-        method_name = VIZ_BUILTIN_METHODS[name]
+def resolve_builtin(
+    name: str,
+    canvas: Any,
+    viz_methods: dict[str, str] | None = None,
+    plain_canvas_methods: dict[str, str] | None = None,
+) -> ResolvedBuiltin:
+    """Resolves a DSL name to a callable against `canvas`.
+
+    `viz_methods`/`plain_canvas_methods` let a caller supply a specific
+    canvas type's builtin maps (see canvas/registry.py's CanvasType) instead
+    of the defaults below -- this is what lets a new canvas type add its
+    own verbs (e.g. a tree canvas's SetChild) without editing this file.
+    Defaults preserve the original behavior for callers that don't care.
+    """
+    viz_methods = VIZ_BUILTIN_METHODS if viz_methods is None else viz_methods
+    plain_canvas_methods = PLAIN_CANVAS_METHODS if plain_canvas_methods is None else plain_canvas_methods
+
+    if name in viz_methods:
+        method_name = viz_methods[name]
         method = getattr(canvas, method_name, None)
         if method is None:
             raise PseudocodeError(
                 f"'{name}' is not supported by this canvas (missing '{method_name}')"
             )
         return ResolvedBuiltin(name, method, is_viz=True)
-    if name in PLAIN_CANVAS_METHODS:
-        method_name = PLAIN_CANVAS_METHODS[name]
+    if name in plain_canvas_methods:
+        method_name = plain_canvas_methods[name]
         method = getattr(canvas, method_name, None)
         if method is None:
             raise PseudocodeError(

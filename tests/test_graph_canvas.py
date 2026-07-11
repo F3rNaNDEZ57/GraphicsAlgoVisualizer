@@ -20,6 +20,12 @@ def test_neighbors():
     assert graph.node_count() == 3
 
 
+def test_get_start_and_get_goal():
+    graph = make_graph()
+    assert graph.get_start() == 0
+    assert graph.get_goal() == 2
+
+
 def test_visit_colors_node_but_not_start_or_goal():
     graph = make_graph()
     events = []
