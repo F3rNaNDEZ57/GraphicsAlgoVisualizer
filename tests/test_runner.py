@@ -33,6 +33,10 @@ def counting_steps(n):
         yield
 
 
+def labeled_steps(labels):
+    yield from labels
+
+
 def test_step_advances_generator_once():
     runner = Runner(FakeScheduler(), counting_steps(3), PlaybackState())
     runner.step()
@@ -79,3 +83,14 @@ def test_error_in_steps_invokes_on_error_and_stops():
     assert runner.finished
     assert len(errors) == 1
     assert "boom" in str(errors[0])
+
+
+def test_on_step_receives_each_yielded_value():
+    received = []
+    runner = Runner(
+        FakeScheduler(), labeled_steps(["a", "b", "c"]), PlaybackState(), on_step=received.append
+    )
+    runner.step()
+    runner.step()
+    runner.step()
+    assert received == ["a", "b", "c"]

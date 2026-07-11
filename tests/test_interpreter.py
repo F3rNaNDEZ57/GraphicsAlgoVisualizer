@@ -2,6 +2,7 @@ import pytest
 
 from algoviz.pseudocode.errors import PseudocodeError
 from algoviz.pseudocode.interpreter import Interpreter
+from algoviz.pseudocode.step_event import StepEvent
 
 
 def run_all(source: str, canvas):
@@ -23,6 +24,28 @@ def test_plot_pixel_yields_one_step_per_call(recording_canvas):
         ("plot_pixel", (0, 0), {}),
         ("plot_pixel", (1, 1), {}),
     ]
+
+
+def test_step_events_carry_action_args_and_lineno(recording_canvas):
+    interp = Interpreter("x = 1\nPlotPixel(x, 2)\n", recording_canvas)
+    steps = list(interp.run())
+    assert steps == [StepEvent(action="PlotPixel", args=(1, 2), lineno=2)]
+
+
+def test_step_budget_raises_on_viz_free_infinite_loop(recording_canvas):
+    interp = Interpreter("i = 0\nwhile True:\n    i = i + 1\n", recording_canvas, step_budget=1000)
+    with pytest.raises(PseudocodeError, match="step budget exceeded"):
+        list(interp.run())
+
+
+def test_step_budget_resets_after_each_yield(recording_canvas):
+    # 5 loop iterations, each doing a handful of statements plus one viz
+    # call that resets the budget counter -- should not raise even with a
+    # tiny budget, since the budget only guards *between* yields.
+    source = "i = 0\nwhile i < 5:\n    PlotPixel(i, 0)\n    i = i + 1\n"
+    interp = Interpreter(source, recording_canvas, step_budget=10)
+    steps = list(interp.run())
+    assert len(steps) == 5
 
 
 def test_if_else_branches(recording_canvas):

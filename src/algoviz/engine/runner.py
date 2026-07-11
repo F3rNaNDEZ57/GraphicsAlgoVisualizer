@@ -5,7 +5,7 @@ this module never imports tkinter and stays testable headless.
 
 from __future__ import annotations
 
-from typing import Callable, Iterator, Optional, Protocol
+from typing import Any, Callable, Iterator, Optional, Protocol
 
 from ..pseudocode.errors import PseudocodeError
 from .playback import PlaybackState
@@ -20,16 +20,18 @@ class Runner:
     def __init__(
         self,
         scheduler: Scheduler,
-        steps: Iterator[None],
+        steps: Iterator[Any],
         state: PlaybackState,
         on_finish: Optional[Callable[[], None]] = None,
         on_error: Optional[Callable[[PseudocodeError], None]] = None,
+        on_step: Optional[Callable[[Any], None]] = None,
     ):
         self.scheduler = scheduler
         self._steps = steps
         self.state = state
         self.on_finish = on_finish
         self.on_error = on_error
+        self.on_step = on_step
         self._after_token: object | None = None
         self._finished = False
 
@@ -65,7 +67,7 @@ class Runner:
         if self._finished:
             return
         try:
-            next(self._steps)
+            event = next(self._steps)
         except StopIteration:
             self._finish(self.on_finish)
         except PseudocodeError as exc:
@@ -74,6 +76,9 @@ class Runner:
                 self.state.playing = False
                 raise
             self._finish(lambda: self.on_error(exc))
+        else:
+            if self.on_step:
+                self.on_step(event)
 
     def _finish(self, callback: Optional[Callable[[], None]]) -> None:
         self._finished = True

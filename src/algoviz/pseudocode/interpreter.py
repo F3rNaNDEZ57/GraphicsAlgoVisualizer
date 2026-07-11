@@ -14,6 +14,12 @@ from typing import Any, Iterator
 
 from .builtins_registry import resolve_builtin
 from .errors import PseudocodeError
+from .step_event import StepEvent
+
+# Max statements executed between two visualization actions (i.e. between
+# two yields). A viz-free `while True:` would otherwise run to completion
+# inside a single next() call and freeze the caller's event loop forever.
+DEFAULT_STEP_BUDGET = 200_000
 
 _ALLOWED_NODES = (
     ast.Module,
@@ -82,17 +88,19 @@ _UNARYOPS: dict[type, Any] = {
 class Interpreter:
     """Parses and runs one pseudocode source against a Canvas."""
 
-    def __init__(self, source: str, canvas: Any):
+    def __init__(self, source: str, canvas: Any, step_budget: int = DEFAULT_STEP_BUDGET):
         self.canvas = canvas
         self.env: dict[str, Any] = {}
+        self.step_budget = step_budget
+        self._statements_since_yield = 0
         try:
             self.tree = ast.parse(source, mode="exec")
         except SyntaxError as exc:
             raise PseudocodeError(f"syntax error: {exc.msg}", lineno=exc.lineno) from exc
         self._validate(self.tree)
 
-    def run(self) -> Iterator[None]:
-        """Generator; yields once per visualization builtin call."""
+    def run(self) -> Iterator[StepEvent]:
+        """Generator; yields a StepEvent once per visualization builtin call."""
         yield from self._exec_body(self.tree.body)
 
     # -- validation --------------------------------------------------
@@ -112,11 +120,19 @@ class Interpreter:
 
     # -- statement execution ------------------------------------------
 
-    def _exec_body(self, stmts: list[ast.stmt]) -> Iterator[None]:
+    def _exec_body(self, stmts: list[ast.stmt]) -> Iterator[StepEvent]:
         for stmt in stmts:
             yield from self._exec_stmt(stmt)
 
-    def _exec_stmt(self, stmt: ast.stmt) -> Iterator[None]:
+    def _exec_stmt(self, stmt: ast.stmt) -> Iterator[StepEvent]:
+        self._statements_since_yield += 1
+        if self._statements_since_yield > self.step_budget:
+            raise PseudocodeError(
+                "step budget exceeded — a loop ran too long without a visualization "
+                "action (possible infinite loop)",
+                lineno=getattr(stmt, "lineno", None),
+            )
+
         if isinstance(stmt, ast.Assign):
             value = self._eval_expr(stmt.value)
             for target in stmt.targets:
@@ -160,14 +176,15 @@ class Interpreter:
             f"unsupported statement: {type(stmt).__name__}", lineno=getattr(stmt, "lineno", None)
         )
 
-    def _exec_call_stmt(self, call: ast.Call) -> Iterator[None]:
+    def _exec_call_stmt(self, call: ast.Call) -> Iterator[StepEvent]:
         name = self._call_name(call)
         args = [self._eval_expr(a) for a in call.args]
         kwargs = {kw.arg: self._eval_expr(kw.value) for kw in call.keywords}
         builtin = resolve_builtin(name, self.canvas)
         builtin.invoke(*args, **kwargs)
         if builtin.is_viz:
-            yield
+            yield StepEvent(action=name, args=tuple(args), lineno=call.lineno)
+            self._statements_since_yield = 0
 
     def _assign(self, target: ast.expr, value: Any) -> None:
         if isinstance(target, ast.Name):

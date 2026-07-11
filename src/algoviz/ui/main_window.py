@@ -12,7 +12,12 @@ from algoviz.engine.playback import PlaybackState
 from algoviz.engine.runner import Runner
 from algoviz.pseudocode.errors import PseudocodeError
 from algoviz.pseudocode.interpreter import Interpreter
+from algoviz.pseudocode.step_event import StepEvent
 from algoviz.ui.presets import PRESETS
+
+CURRENT_LINE_TAG = "current_line"
+CURRENT_LINE_BG = "#444444"
+CURRENT_LINE_FG = "#ffffff"
 
 
 class MainWindow:
@@ -44,6 +49,7 @@ class MainWindow:
         self.input_frame.pack(fill="x")
 
         self.code_input = scrolledtext.ScrolledText(self.root, width=70, height=16)
+        self.code_input.tag_config(CURRENT_LINE_TAG, background=CURRENT_LINE_BG, foreground=CURRENT_LINE_FG)
         self.code_input.pack()
 
         controls = tk.Frame(self.root)
@@ -54,6 +60,18 @@ class MainWindow:
         tk.Button(controls, text="Step", command=self.step).pack(side="left")
         tk.Button(controls, text="Reset", command=self.reset).pack(side="left")
         tk.Button(controls, text="Quit", command=self.root.destroy).pack(side="left")
+
+        tk.Label(controls, text="Delay (ms/step):").pack(side="left", padx=(12, 0))
+        self.speed_var = tk.IntVar(value=self.playback.delay_ms)
+        tk.Scale(
+            controls,
+            from_=10,
+            to=500,
+            orient="horizontal",
+            variable=self.speed_var,
+            length=140,
+            command=self._on_speed_change,
+        ).pack(side="left")
 
         self.canvas_frame = tk.Frame(self.root)
         self.canvas_frame.pack()
@@ -89,11 +107,29 @@ class MainWindow:
 
         self.code_input.delete("1.0", tk.END)
         self.code_input.insert("1.0", self.preset.source)
+        self._clear_line_highlight()
         self._log(f"Loaded {self.preset.name}.")
 
     def _log(self, message: str) -> None:
         self.status.insert(tk.END, message + "\n")
         self.status.see(tk.END)
+
+    def _on_speed_change(self, value: str) -> None:
+        self.playback.delay_ms = int(float(value))
+
+    def _on_step(self, event: StepEvent) -> None:
+        self._highlight_line(event.lineno)
+        args_repr = ", ".join(repr(a) for a in event.args)
+        self._log(f"line {event.lineno}: {event.action}({args_repr})")
+
+    def _highlight_line(self, lineno: int | None) -> None:
+        self._clear_line_highlight()
+        if lineno is not None:
+            self.code_input.tag_add(CURRENT_LINE_TAG, f"{lineno}.0", f"{lineno}.end+1c")
+            self.code_input.see(f"{lineno}.0")
+
+    def _clear_line_highlight(self) -> None:
+        self.code_input.tag_remove(CURRENT_LINE_TAG, "1.0", tk.END)
 
     def _read_inputs(self) -> dict | None:
         env = dict(self.preset.initial_env())
@@ -127,6 +163,7 @@ class MainWindow:
             self.playback,
             on_finish=lambda: self._log("Done."),
             on_error=lambda exc: self._log(f"Error: {exc}"),
+            on_step=self._on_step,
         )
         self._log("Running...")
         self.runner.play()
@@ -148,6 +185,7 @@ class MainWindow:
             self.runner.pause()
         if self.canvas:
             self.canvas.clear()
+        self._clear_line_highlight()
 
 
 def launch() -> None:
