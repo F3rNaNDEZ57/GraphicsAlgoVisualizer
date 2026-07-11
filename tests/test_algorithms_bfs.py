@@ -1,8 +1,14 @@
 from collections import deque
 
-from algoviz.algorithms.bfs_pathfinding import EDGES, GOAL, POSITIONS, SOURCE, START
 from algoviz.canvas.graph_canvas import PATH_COLOR, GraphCanvas
+from algoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_maze
 from algoviz.pseudocode.interpreter import Interpreter
+
+from conftest import bundled_preset
+
+_PRESET = bundled_preset("BFS Pathfinding")
+SOURCE = _PRESET.source
+POSITIONS, EDGES, START, GOAL = parse_maze(_PRESET.canvas_params["maze"])
 
 
 def reference_shortest_path(edges, start, goal):
@@ -23,11 +29,15 @@ def reference_shortest_path(edges, start, goal):
     return path
 
 
-def test_bfs_reaches_goal_and_highlights_shortest_path():
+def run_bfs():
     graph = GraphCanvas(POSITIONS, EDGES, START, GOAL)
-    interp = Interpreter(SOURCE, graph)
-    interp.env.update({"start": START, "goal": GOAL})
-    list(interp.run())
+    interp = Interpreter(SOURCE, graph, GRAPH_CANVAS_TYPE.viz_builtins, GRAPH_CANVAS_TYPE.plain_builtins)
+    steps = list(interp.run())
+    return graph, steps
+
+
+def test_bfs_reaches_goal_and_highlights_shortest_path():
+    graph, _ = run_bfs()
 
     expected_path = reference_shortest_path(EDGES, START, GOAL)
     intermediate_nodes = set(expected_path) - {START, GOAL}
@@ -37,8 +47,5 @@ def test_bfs_reaches_goal_and_highlights_shortest_path():
 
 
 def test_bfs_terminates_and_produces_steps():
-    graph = GraphCanvas(POSITIONS, EDGES, START, GOAL)
-    interp = Interpreter(SOURCE, graph)
-    interp.env.update({"start": START, "goal": GOAL})
-    steps = list(interp.run())
+    _, steps = run_bfs()
     assert len(steps) > 0

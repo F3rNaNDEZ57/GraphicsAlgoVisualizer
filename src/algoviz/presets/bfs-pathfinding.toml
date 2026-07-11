@@ -1,0 +1,45 @@
+[preset]
+name = "BFS Pathfinding"
+canvas = "graph"
+description = "Breadth-first search shortest path through a maze."
+source = '''
+n = NodeCount()
+visited = [0] * n
+parent = [-1] * n
+queue = [0] * n
+head = 0
+tail = 0
+queue[tail] = Start()
+tail = tail + 1
+visited[Start()] = 1
+found = 0
+while head < tail and found == 0:
+    current = queue[head]
+    head = head + 1
+    Visit(current)
+    if current == Goal():
+        found = 1
+    else:
+        for nb in Neighbors(current):
+            if visited[nb] == 0:
+                visited[nb] = 1
+                parent[nb] = current
+                queue[tail] = nb
+                tail = tail + 1
+
+if found == 1:
+    node = Goal()
+    while node != Start():
+        Highlight(node)
+        node = parent[node]
+'''
+
+[canvas]
+maze = [
+  "S....#..",
+  "...#.#..",
+  "...#.#..",
+  "...#....",
+  "...#.#..",
+  ".....#.G",
+]

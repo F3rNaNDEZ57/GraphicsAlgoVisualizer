@@ -1,8 +1,13 @@
 import pytest
 
-from algoviz.algorithms.bubble_sort import DEFAULT_VALUES, SOURCE
 from algoviz.canvas.array_canvas import ArrayCanvas
 from algoviz.pseudocode.interpreter import Interpreter
+
+from conftest import bundled_preset
+
+_PRESET = bundled_preset("Bubble Sort")
+SOURCE = _PRESET.source
+DEFAULT_VALUES = _PRESET.canvas_params["values"]
 
 
 @pytest.mark.parametrize(

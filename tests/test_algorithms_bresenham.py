@@ -1,8 +1,11 @@
 import pytest
 
-from algoviz.algorithms.bresenham_line import SOURCE
 from algoviz.canvas.grid_canvas import GridCanvas
 from algoviz.pseudocode.interpreter import Interpreter
+
+from conftest import bundled_preset
+
+SOURCE = bundled_preset("Bresenham Line").source
 
 
 def reference_bresenham(xl, yl, xr, yr):
