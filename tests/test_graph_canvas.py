@@ -52,3 +52,26 @@ def test_clear_resets_states():
     assert graph.state_of(1) == DEFAULT_STATE
     assert graph.state_of(0) == START_STATE
     assert graph.state_of(2) == GOAL_STATE
+
+
+def test_weight_defaults_to_one_when_no_weights_given():
+    graph = make_graph()
+    assert graph.weight(0, 1) == 1.0
+    assert graph.weight(1, 0) == 1.0
+    assert graph.show_weights is False
+
+
+def test_weight_looks_up_explicit_weights_either_direction():
+    positions = {0: (0, 0), 1: (1, 0), 2: (2, 0)}
+    edges = {0: [1], 1: [0, 2], 2: [1]}
+    weights = {(0, 1): 4.0, (1, 0): 4.0, (1, 2): 7.0, (2, 1): 7.0}
+    graph = GraphCanvas(positions, edges, start=0, goal=2, weights=weights)
+    assert graph.weight(0, 1) == 4.0
+    assert graph.weight(1, 0) == 4.0
+    assert graph.weight(2, 1) == 7.0
+    assert graph.show_weights is True
+
+
+def test_labels_default_empty():
+    graph = make_graph()
+    assert graph.labels == {}

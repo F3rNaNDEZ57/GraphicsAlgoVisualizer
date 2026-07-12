@@ -27,11 +27,19 @@ class GraphCanvas:
         edges: dict[int, list[int]],
         start: int,
         goal: int,
+        weights: dict[tuple[int, int], float] | None = None,
+        labels: dict[int, str] | None = None,
     ):
         self.positions = positions
         self.edges = edges
         self.start = start
         self.goal = goal
+        self.weights = weights or {}
+        self.labels = labels or {}
+        # Only graphs built with real weight data (the network editor/TOML
+        # format) show weight labels -- a maze's uniform 1.0 fallback would
+        # just clutter an unweighted BFS visualization with "1" everywhere.
+        self.show_weights = bool(weights)
         self._states: dict[int, str] = {n: DEFAULT_STATE for n in positions}
         self._states[start] = START_STATE
         self._states[goal] = GOAL_STATE
@@ -46,6 +54,17 @@ class GraphCanvas:
 
     def neighbors(self, node: int) -> list[int]:
         return list(self.edges.get(int(node), []))
+
+    def weight(self, a: int, b: int) -> float:
+        """Edge weight between a and b, undirected. Graphs built without
+        explicit weight data (e.g. a maze, where every step costs the same)
+        default every edge to 1.0."""
+        a, b = int(a), int(b)
+        if (a, b) in self.weights:
+            return self.weights[(a, b)]
+        if (b, a) in self.weights:
+            return self.weights[(b, a)]
+        return 1.0
 
     def node_count(self) -> int:
         return len(self.positions)
