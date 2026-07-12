@@ -22,45 +22,62 @@ A pseudocode-driven 2D algorithm visualizer built with Python and CustomTkinter.
 
 - **Python 3.11+**
 - **Tkinter** (usually ships with Python; see platform notes below)
-- **Git** (to clone the repo)
 
 ---
 
-## 🚀 Getting Started
+## 📦 Installation
 
-### 1. Clone the Repository
+### For users
+
+`pyalgoviz` is [published on PyPI](https://pypi.org/project/pyalgoviz/) — no cloning required:
+
+```bash
+pip install pyalgoviz
+```
+
+Then run it:
+
+```bash
+pyalgoviz
+```
+
+### For developers
+
+Clone the repo and install in editable mode so code changes take effect immediately, without re-installing.
+
+#### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/F3rNaNDEZ57/GraphicsAlgoVisualizer.git
 cd GraphicsAlgoVisualizer
 ```
 
-### 2. Create a Virtual Environment
+#### 2. Create a Virtual Environment
 
-#### macOS / Linux
+##### macOS / Linux
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-#### Windows (PowerShell)
+##### Windows (PowerShell)
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-#### Windows (Command Prompt)
+##### Windows (Command Prompt)
 
 ```cmd
 python -m venv .venv
 .venv\Scripts\activate.bat
 ```
 
-### 3. Install the Package
+#### 3. Install the Package
 
-Install in editable (development) mode so changes take effect immediately:
+Install in editable (development) mode:
 
 ```bash
 pip install -e ".[dev]"
@@ -68,7 +85,13 @@ pip install -e ".[dev]"
 
 > **Note:** The `[dev]` extra includes `pytest` for running tests.
 
-### 4. Run the Visualizer
+To also work on the bundled example plugin, install it editable too:
+
+```bash
+pip install -e plugins/pyalgoviz-heap-canvas
+```
+
+#### 4. Run the Visualizer
 
 ```bash
 pyalgoviz
@@ -219,7 +242,7 @@ The visualizer supports two plugin mechanisms:
 1. **Drop-in plugins** — Place a Python package in the `plugins/` directory. It will be auto-discovered on startup.
 2. **Entry-point plugins** — Register a `pyalgoviz.canvases` entry point in your package's `pyproject.toml`. Installed packages with this entry point are loaded automatically.
 
-See [`plugins/pyalgoviz-heap-canvas/`](plugins/pyalgoviz-heap-canvas/) for a working example.
+See [`plugins/pyalgoviz-heap-canvas/`](plugins/pyalgoviz-heap-canvas/) for a working example of an entry-point plugin.
 
 ---
 
