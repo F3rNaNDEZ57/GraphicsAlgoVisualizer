@@ -242,7 +242,13 @@ The visualizer supports two plugin mechanisms:
 1. **Drop-in plugins** — Place a Python package in the `plugins/` directory. It will be auto-discovered on startup.
 2. **Entry-point plugins** — Register a `pyalgoviz.canvases` entry point in your package's `pyproject.toml`. Installed packages with this entry point are loaded automatically.
 
-See [`plugins/pyalgoviz-heap-canvas/`](plugins/pyalgoviz-heap-canvas/) for a working example of an entry-point plugin.
+[`pyalgoviz-heap-canvas`](https://pypi.org/project/pyalgoviz-heap-canvas/) is a working example of an entry-point plugin, published on PyPI:
+
+```bash
+pip install pyalgoviz-heap-canvas
+```
+
+Its source lives at [`plugins/pyalgoviz-heap-canvas/`](plugins/pyalgoviz-heap-canvas/).
 
 ---
 
