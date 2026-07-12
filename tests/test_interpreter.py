@@ -176,6 +176,18 @@ def test_syntax_error_surfaces_as_pseudocode_error(recording_canvas):
         run_all("x = (\n", recording_canvas)
 
 
+def test_show_answer_is_canvas_agnostic_and_yields_a_step(recording_canvas):
+    interp = Interpreter('ShowAnswer("cost", 5)\n', recording_canvas)
+    steps = list(interp.run())
+    assert steps == [StepEvent(action="ShowAnswer", args=("cost", 5), lineno=1)]
+
+
+def test_show_answer_works_with_a_single_argument(recording_canvas):
+    interp = Interpreter("ShowAnswer(42)\n", recording_canvas)
+    steps = list(interp.run())
+    assert steps == [StepEvent(action="ShowAnswer", args=(42,), lineno=1)]
+
+
 def test_canvas_missing_method_raises_clear_error():
     class BareCanvas:
         pass

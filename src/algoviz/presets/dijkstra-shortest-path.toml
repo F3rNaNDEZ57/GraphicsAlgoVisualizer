@@ -39,6 +39,9 @@ if visited[Goal()] == 1:
     while node != Start():
         Highlight(node)
         node = parent[node]
+    ShowAnswer("Shortest path cost", dist[Goal()])
+else:
+    ShowAnswer("No path found")
 '''
 
 [canvas]

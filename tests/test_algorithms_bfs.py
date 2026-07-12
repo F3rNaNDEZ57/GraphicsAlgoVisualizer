@@ -3,6 +3,7 @@ from collections import deque
 from algoviz.canvas.graph_canvas import PATH_STATE, GraphCanvas
 from algoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_maze
 from algoviz.pseudocode.interpreter import Interpreter
+from algoviz.pseudocode.step_event import StepEvent
 
 from conftest import bundled_preset
 
@@ -49,3 +50,12 @@ def test_bfs_reaches_goal_and_highlights_shortest_path():
 def test_bfs_terminates_and_produces_steps():
     _, steps = run_bfs()
     assert len(steps) > 0
+
+
+def test_bfs_shows_the_answer():
+    _, steps = run_bfs()
+    expected_hops = len(reference_shortest_path(EDGES, START, GOAL)) - 1
+    answer_steps = [s for s in steps if s.action == "ShowAnswer"]
+    assert answer_steps == [
+        StepEvent(action="ShowAnswer", args=("Path length (hops)", expected_hops), lineno=answer_steps[0].lineno)
+    ]

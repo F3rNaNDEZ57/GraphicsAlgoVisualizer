@@ -3,6 +3,7 @@ import heapq
 from algoviz.canvas.graph_canvas import PATH_STATE, GraphCanvas
 from algoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_network
 from algoviz.pseudocode.interpreter import Interpreter
+from algoviz.pseudocode.step_event import StepEvent
 
 from conftest import bundled_preset
 
@@ -59,6 +60,13 @@ def test_dijkstra_finds_minimum_cost_not_just_fewest_hops():
 def test_dijkstra_terminates_and_produces_steps():
     _, _, steps = run_dijkstra()
     assert len(steps) > 0
+
+
+def test_dijkstra_shows_the_answer():
+    _, _, steps = run_dijkstra()
+    ref_cost, _ = reference_dijkstra(EDGES, WEIGHTS, START, GOAL)
+    answer_steps = [s for s in steps if s.action == "ShowAnswer"]
+    assert answer_steps == [StepEvent(action="ShowAnswer", args=("Shortest path cost", ref_cost), lineno=answer_steps[0].lineno)]
 
 
 def test_dijkstra_prefers_lower_weight_over_fewer_hops():

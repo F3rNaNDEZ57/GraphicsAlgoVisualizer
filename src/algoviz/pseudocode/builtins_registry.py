@@ -38,6 +38,26 @@ PLAIN_BUILTINS: dict[str, Callable[..., Any]] = {
 }
 
 
+def _show_answer(*_args: Any, **_kwargs: Any) -> None:
+    """No-op on purpose. ShowAnswer's only job is to mark a step boundary
+    and carry its arguments in the yielded StepEvent -- a caller (e.g.
+    MainWindow) reads event.args to display the result, rather than this
+    function mutating anything. This is what lets it work identically
+    against every canvas type, including third-party plugin canvases that
+    have no shared "display a value" method to call."""
+    return None
+
+
+# Canvas-agnostic viz builtins: available regardless of canvas type, same
+# as PLAIN_BUILTINS but is_viz=True (they still mark a step boundary and
+# yield a StepEvent). ShowAnswer(value) or ShowAnswer(label, value) lets
+# any algorithm's pseudocode explicitly narrate its final result -- total
+# path cost, whether a search succeeded, etc -- not just imply it visually.
+ALWAYS_AVAILABLE_VIZ_BUILTINS: dict[str, Callable[..., Any]] = {
+    "ShowAnswer": _show_answer,
+}
+
+
 @dataclass(frozen=True)
 class ResolvedBuiltin:
     name: str
@@ -80,4 +100,6 @@ def resolve_builtin(
         return ResolvedBuiltin(name, method, is_viz=False)
     if name in PLAIN_BUILTINS:
         return ResolvedBuiltin(name, PLAIN_BUILTINS[name], is_viz=False)
+    if name in ALWAYS_AVAILABLE_VIZ_BUILTINS:
+        return ResolvedBuiltin(name, ALWAYS_AVAILABLE_VIZ_BUILTINS[name], is_viz=True)
     raise PseudocodeError(f"unknown function '{name}'")

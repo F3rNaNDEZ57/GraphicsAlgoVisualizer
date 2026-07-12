@@ -29,9 +29,14 @@ while head < tail and found == 0:
 
 if found == 1:
     node = Goal()
+    steps = 0
     while node != Start():
         Highlight(node)
         node = parent[node]
+        steps = steps + 1
+    ShowAnswer("Path length (hops)", steps)
+else:
+    ShowAnswer("No path found")
 '''
 
 [canvas]
