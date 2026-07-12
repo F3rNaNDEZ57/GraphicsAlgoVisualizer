@@ -13,9 +13,10 @@ from pathlib import Path
 import customtkinter as ctk
 
 import algoviz.canvas_types  # noqa: F401 -- side effect: registers grid/array/graph canvas types
-from algoviz.canvas.registry import ParamSpec, get as get_canvas_type
+from algoviz.canvas.registry import ParamSpec, all_types as all_canvas_types, get as get_canvas_type
 from algoviz.engine.playback import PlaybackState
 from algoviz.engine.runner import Runner
+from algoviz.plugins import DEFAULT_PLUGINS_DIR, load_all_plugins
 from algoviz.preset_loader import (
     BUNDLED_PRESETS_DIR,
     USER_PRESETS_DIR,
@@ -52,6 +53,8 @@ class MainWindow:
         bundled_dir: Path = BUNDLED_PRESETS_DIR,
         user_dir: Path = USER_PRESETS_DIR,
         theme: ThemeTokens = DARK,
+        plugins_dir: Path = DEFAULT_PLUGINS_DIR,
+        load_plugins: bool = True,
     ):
         self.root = root
         self.bundled_dir = bundled_dir
@@ -72,7 +75,18 @@ class MainWindow:
                 pass  # root isn't a CTk-aware widget (e.g. a bare tk.Tk in some tests)
 
         self._build_static_widgets()
+
+        self._plugin_errors: list[str] = []
+        if load_plugins:
+            self._plugin_errors = load_all_plugins(plugins_dir)
+
         self._reload_preset_list()
+
+        for err in self._plugin_errors:
+            self._log(f"Plugin load warning: {err}")
+        if any(t not in ("grid", "array", "graph") for t in all_canvas_types()):
+            extra = sorted(set(all_canvas_types()) - {"grid", "array", "graph"})
+            self._log(f"Loaded plugin canvas types: {', '.join(extra)}")
 
     def _build_static_widgets(self) -> None:
         theme = self.theme
@@ -118,9 +132,21 @@ class MainWindow:
         self.status.pack(padx=8, pady=(4, 8))
 
     def _reload_preset_list(self, select: str | None = None) -> None:
-        self.presets, errors = load_all_presets(self.bundled_dir, self.user_dir)
+        loaded, errors = load_all_presets(self.bundled_dir, self.user_dir)
         for err in errors:
             self._log(f"Preset load warning: {err}")
+
+        registered = all_canvas_types()
+        self.presets = {}
+        for name, preset in loaded.items():
+            if preset.canvas_type_id not in registered:
+                self._log(
+                    f"Preset '{name}' needs canvas type '{preset.canvas_type_id}', "
+                    "which isn't registered (missing plugin?) -- skipped."
+                )
+                continue
+            self.presets[name] = preset
+
         self.algo_menu.configure(values=list(self.presets))
 
         if not self.presets:
