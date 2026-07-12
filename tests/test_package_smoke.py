@@ -1,5 +1,7 @@
+import re
+
 import pyalgoviz
 
 
 def test_package_importable():
-    assert pyalgoviz.__version__ == "0.1.0"
+    assert re.fullmatch(r"\d+\.\d+\.\d+", pyalgoviz.__version__)

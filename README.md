@@ -41,6 +41,16 @@ Then run it:
 pyalgoviz
 ```
 
+#### Adding a plugin
+
+Plugins add new canvas types (see [Plugins](#-plugins) below). Install one from PyPI and `pyalgoviz` auto-discovers it on the next launch — no configuration needed:
+
+```bash
+pip install pyalgoviz-heap-canvas
+```
+
+You'll see `Loaded plugin canvas types: heap` logged at startup once it's picked up. Note that installing a canvas-type plugin doesn't add a ready-to-run algorithm by itself — the app only lists algorithms it has a preset for. To actually use the new canvas type, write a preset with `canvas = "heap"` (see [Writing a Custom Preset](#-writing-a-custom-preset)).
+
 ### For developers
 
 Clone the repo and install in editable mode so code changes take effect immediately, without re-installing.
@@ -162,7 +172,7 @@ GraphicsAlgoVisualizer/
 │   │   └── playback.py         # Play/pause/step state machine
 │   ├── pseudocode/             # DSL interpreter
 │   │   ├── interpreter.py      # Pseudocode interpreter
-│   │   ├── builtins_registry.py# Built-in functions (SetCell, Enqueue, etc.)
+│   │   ├── builtins_registry.py# Built-in functions (PlotPixel, Swap, Visit, etc.)
 │   │   ├── step_event.py       # Step event payloads
 │   │   └── errors.py           # Error types
 │   ├── presets/                 # Bundled TOML algorithm presets
@@ -205,33 +215,34 @@ pytest tests/test_interpreter.py
 
 ## 📝 Writing a Custom Preset
 
-Presets are `.toml` files that define an algorithm's pseudocode, canvas type, and parameters. Place them in the bundled `src/pyalgoviz/presets/` directory or the user presets directory.
+Presets are `.toml` files that define an algorithm's pseudocode, canvas type, and parameters. A preset has a `[preset]` table (`name`, `canvas`, `source`, optional `description`), a `[canvas]` table for canvas constructor params, and optional `[inputs.<key>]` tables for user-editable input widgets. Place your file in the bundled `src/pyalgoviz/presets/` directory or the user presets directory (`~/.pyalgoviz/presets/`).
 
 **Example — a simple grid algorithm:**
 
 ```toml
-[meta]
+[preset]
 name = "My Algorithm"
 canvas = "grid"
+description = "Plots a diagonal line."
+source = '''
+for i in range(10):
+    PlotPixel(i, i)
+'''
 
-[params]
+[canvas]
 width = 20
 height = 20
-
-[source]
-code = """
-for x in Range(0, 10):
-    SetCell(x, x, "visited")
-"""
 ```
 
 ### Supported Canvas Types
 
-| Canvas  | Use Case                        | Key Builtins                          |
-|---------|---------------------------------|---------------------------------------|
-| `grid`  | 2D grid algorithms              | `SetCell`, `GetCell`, `Mark`          |
-| `array` | Sorting / linear data           | `Swap`, `Compare`, `SetIndex`         |
-| `graph` | Graph traversal / shortest path | `Enqueue`, `Dequeue`, `MarkEdge`      |
+| Canvas  | Use Case                        | Key Builtins                                                              |
+|---------|----------------------------------|-----------------------------------------------------------------------------|
+| `grid`  | 2D grid algorithms              | `PlotPixel`                                                                |
+| `array` | Sorting / linear data           | `SetValue`, `Swap`, `Compare`, `Value`, `Length`                          |
+| `graph` | Graph traversal / shortest path | `Visit`, `Highlight`, `Neighbors`, `NodeCount`, `Start`, `Goal`, `Weight` |
+
+Every canvas type also gets `ShowAnswer(value)` (or `ShowAnswer(label, value)`) for free, to narrate a final result regardless of canvas — see `src/pyalgoviz/pseudocode/builtins_registry.py` for the full whitelist. Plugin canvas types add their own builtins on top of this (see [Plugins](#-plugins) below).
 
 ---
 
@@ -248,7 +259,43 @@ The visualizer supports two plugin mechanisms:
 pip install pyalgoviz-heap-canvas
 ```
 
-Its source lives at [`plugins/pyalgoviz-heap-canvas/`](plugins/pyalgoviz-heap-canvas/).
+Its source lives at [`plugins/pyalgoviz-heap-canvas/`](plugins/pyalgoviz-heap-canvas/). It registers a `heap` canvas type with `SetValue`, `Swap`, `Compare` (visualized) and `Value`, `Length`, `Parent`, `LeftChild`, `RightChild` (read-only) builtins on top of the ones every canvas gets.
+
+There's no bundled preset for it — write one, e.g. a single sift-down pass from the root:
+
+```toml
+[preset]
+name = "Heap Sift Down"
+canvas = "heap"
+description = "Sifts the root down into place (requires pyalgoviz-heap-canvas)."
+source = '''
+i = 0
+n = Length()
+done = 0
+while done == 0:
+    left = LeftChild(i)
+    right = RightChild(i)
+    smallest = i
+    if left < n:
+        Compare(smallest, left)
+        if Value(left) < Value(smallest):
+            smallest = left
+    if right < n:
+        Compare(smallest, right)
+        if Value(right) < Value(smallest):
+            smallest = right
+    if smallest == i:
+        done = 1
+    else:
+        Swap(i, smallest)
+        i = smallest
+'''
+
+[canvas]
+values = [9, 4, 7, 1, 8, 3, 6, 2, 5]
+```
+
+Save this as a `.toml` file in `~/.pyalgoviz/presets/` and it'll show up in the algorithm picker next time you launch `pyalgoviz`.
 
 ---
 

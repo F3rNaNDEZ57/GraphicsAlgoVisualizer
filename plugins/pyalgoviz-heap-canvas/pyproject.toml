@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyalgoviz-heap-canvas"
-version = "0.1.0"
+version = "0.1.1"
 description = "Binary min-heap canvas plugin for pyalgoviz -- proves the plugin seam works without editing pyalgoviz core"
 license = "MIT"
 authors = [{ name = "Kavindu Fernando", email = "kavindufernando329@gmail.com" }]
