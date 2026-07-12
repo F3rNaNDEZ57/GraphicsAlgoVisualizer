@@ -140,6 +140,12 @@ def _format_scalar(value: Any) -> str:
         return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
     if isinstance(value, list):
         return "[" + ", ".join(_format_scalar(v) for v in value) + "]"
+    if isinstance(value, dict):
+        # Inline table -- used for canvas.nodes/canvas.edges entries in the
+        # graph network format. Simpler than tracking a table path to emit
+        # `[[canvas.nodes]]` array-of-tables blocks, and tomllib reads it
+        # identically.
+        return "{" + ", ".join(f"{key} = {_format_scalar(v)}" for key, v in value.items()) + "}"
     raise PresetError(f"cannot serialize value of type {type(value).__name__} to TOML")
 
 

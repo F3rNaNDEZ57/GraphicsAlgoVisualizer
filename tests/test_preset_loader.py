@@ -119,3 +119,30 @@ def test_write_preset_file_slug_handles_special_characters(tmp_path):
     preset = LoadedPreset(name="Foo & Bar!!  Baz", canvas_type_id="grid", description="", source="PlotPixel(0,0)\n")
     path = write_preset_file(preset, directory=tmp_path)
     assert path.name == "foo-bar-baz.toml"
+
+
+def test_write_preset_file_roundtrips_network_graph_with_inline_tables(tmp_path):
+    original = LoadedPreset(
+        name="Custom Network",
+        canvas_type_id="graph",
+        description="",
+        canvas_params={
+            "start": 0,
+            "goal": 2,
+            "nodes": [
+                {"id": 0, "x": 10, "y": 20, "label": "A"},
+                {"id": 1, "x": 100, "y": 20},
+                {"id": 2, "x": 200, "y": 20, "label": "C"},
+            ],
+            "edges": [
+                {"from": 0, "to": 1, "weight": 4},
+                {"from": 1, "to": 2, "weight": 7.5},
+            ],
+        },
+        source="Visit(0)\n",
+    )
+
+    path = write_preset_file(original, directory=tmp_path)
+    reloaded = load_preset_file(path)
+
+    assert reloaded.canvas_params == original.canvas_params
