@@ -7,7 +7,7 @@ name = "algoviz"
 version = "0.1.0"
 description = "Pseudocode-driven 2D algorithm visualizer"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["customtkinter>=5.2"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
