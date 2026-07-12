@@ -68,6 +68,8 @@ class MainWindow:
         self.canvas_type = None
         self.preset: LoadedPreset | None = None
         self.input_widgets: dict[str, ctk.CTkEntry] = {}
+        self.render_scale = 1.0
+        self.presentation = False
 
         if hasattr(self.root, "configure"):
             try:
@@ -76,6 +78,8 @@ class MainWindow:
                 pass  # root isn't a CTk-aware widget (e.g. a bare tk.Tk in some tests)
 
         self._build_static_widgets()
+        if hasattr(self.root, "bind"):
+            self.root.bind("<Escape>", lambda _event: self.exit_presentation())
 
         self._plugin_errors: list[str] = []
         if load_plugins:
@@ -92,48 +96,69 @@ class MainWindow:
     def _build_static_widgets(self) -> None:
         theme = self.theme
 
-        top = ctk.CTkFrame(self.root, fg_color=theme.panel_bg)
-        top.pack(fill="x", padx=8, pady=(8, 4))
-        ctk.CTkLabel(top, text="Algorithm:", text_color=theme.fg).pack(side="left", padx=(8, 4))
+        self.top = ctk.CTkFrame(self.root, fg_color=theme.panel_bg)
+        ctk.CTkLabel(self.top, text="Algorithm:", text_color=theme.fg).pack(side="left", padx=(8, 4))
         self.algo_menu = ctk.CTkComboBox(
-            top, values=[], state="readonly", width=220, command=self._on_algo_selected
+            self.top, values=[], state="readonly", width=220, command=self._on_algo_selected
         )
         self.algo_menu.pack(side="left")
-        ctk.CTkButton(top, text="Save preset…", command=self.save_preset, width=110).pack(
+        ctk.CTkButton(self.top, text="Save preset…", command=self.save_preset, width=110).pack(
             side="left", padx=(8, 4)
         )
-        ctk.CTkButton(top, text="New Network…", command=self.open_graph_editor, width=120).pack(
+        ctk.CTkButton(self.top, text="New Network…", command=self.open_graph_editor, width=120).pack(
             side="left", padx=(0, 8)
         )
 
         self.input_frame = ctk.CTkFrame(self.root, fg_color=theme.panel_bg)
-        self.input_frame.pack(fill="x", padx=8, pady=4)
 
         self.code_input = ctk.CTkTextbox(self.root, width=680, height=280)
         self.code_input.tag_config(CURRENT_LINE_TAG, background="#444444", foreground="#ffffff")
-        self.code_input.pack(padx=8, pady=4)
 
-        controls = ctk.CTkFrame(self.root, fg_color=theme.panel_bg)
-        controls.pack(fill="x", padx=8, pady=4)
-        ctk.CTkButton(controls, text="Run", command=self.run_code, width=70).pack(side="left", padx=4, pady=6)
-        ctk.CTkButton(controls, text="Play", command=self.play, width=70).pack(side="left", padx=4)
-        ctk.CTkButton(controls, text="Pause", command=self.pause, width=70).pack(side="left", padx=4)
-        ctk.CTkButton(controls, text="Step", command=self.step, width=70).pack(side="left", padx=4)
-        ctk.CTkButton(controls, text="Reset", command=self.reset, width=70).pack(side="left", padx=4)
-        ctk.CTkButton(controls, text="Quit", command=self.root.destroy, width=70).pack(side="left", padx=4)
+        self.controls = ctk.CTkFrame(self.root, fg_color=theme.panel_bg)
+        ctk.CTkButton(self.controls, text="Run", command=self.run_code, width=70).pack(
+            side="left", padx=4, pady=6
+        )
+        ctk.CTkButton(self.controls, text="Play", command=self.play, width=70).pack(side="left", padx=4)
+        ctk.CTkButton(self.controls, text="Pause", command=self.pause, width=70).pack(side="left", padx=4)
+        ctk.CTkButton(self.controls, text="Step", command=self.step, width=70).pack(side="left", padx=4)
+        ctk.CTkButton(self.controls, text="Reset", command=self.reset, width=70).pack(side="left", padx=4)
+        self.present_button = ctk.CTkButton(
+            self.controls, text="Present", command=self.toggle_presentation, width=80
+        )
+        self.present_button.pack(side="left", padx=(12, 4))
+        ctk.CTkButton(self.controls, text="Quit", command=self.root.destroy, width=70).pack(side="left", padx=4)
 
-        ctk.CTkLabel(controls, text="Delay (ms/step):", text_color=theme.fg).pack(side="left", padx=(16, 4))
-        self.speed_label = ctk.CTkLabel(controls, text=str(self.playback.delay_ms), text_color=theme.fg, width=36)
+        ctk.CTkLabel(self.controls, text="Delay (ms/step):", text_color=theme.fg).pack(side="left", padx=(16, 4))
+        self.speed_label = ctk.CTkLabel(self.controls, text=str(self.playback.delay_ms), text_color=theme.fg, width=36)
         ctk.CTkSlider(
-            controls, from_=10, to=500, width=140, command=self._on_speed_change
+            self.controls, from_=10, to=500, width=140, command=self._on_speed_change
         ).pack(side="left", padx=4)
         self.speed_label.pack(side="left")
 
         self.canvas_frame = ctk.CTkFrame(self.root, fg_color=theme.bg)
-        self.canvas_frame.pack(padx=8, pady=4)
 
         self.status = ctk.CTkTextbox(self.root, width=680, height=110)
+
+        self._layout_normal()
+
+    def _layout_normal(self) -> None:
+        for widget in (self.top, self.input_frame, self.code_input, self.controls, self.canvas_frame, self.status):
+            widget.pack_forget()
+        self.top.pack(fill="x", padx=8, pady=(8, 4))
+        self.input_frame.pack(fill="x", padx=8, pady=4)
+        self.code_input.pack(padx=8, pady=4)
+        self.controls.pack(fill="x", padx=8, pady=4)
+        self.canvas_frame.pack(padx=8, pady=4)
         self.status.pack(padx=8, pady=(4, 8))
+
+    def _layout_presentation(self) -> None:
+        # Hides everything but the canvas and a minimal playback bar --
+        # the code editor, input fields, and status log are noise once
+        # you're actually presenting the visualization.
+        for widget in (self.top, self.input_frame, self.code_input, self.controls, self.canvas_frame, self.status):
+            widget.pack_forget()
+        self.controls.pack(fill="x", padx=8, pady=8)
+        self.canvas_frame.pack(expand=True)
 
     def _reload_preset_list(self, select: str | None = None) -> None:
         loaded, errors = load_all_presets(self.bundled_dir, self.user_dir)
@@ -173,16 +198,12 @@ class MainWindow:
         if hasattr(self.root, "title"):
             self.root.title(f"AlgoViz — {self.preset.name}")
 
-        for widget in self.canvas_frame.winfo_children():
-            widget.destroy()
         for widget in self.input_frame.winfo_children():
             widget.destroy()
         self.input_widgets.clear()
 
         self.canvas = self.canvas_type.make_canvas(self.preset.canvas_params)
-        renderer_cls = self.canvas_type.renderers["tk"]
-        self.renderer = renderer_cls(self.canvas_frame, self.canvas, theme=self.theme)
-        self.renderer.widget.pack()
+        self._rebuild_renderer()
 
         for key, spec in self.preset.inputs.items():
             ctk.CTkLabel(self.input_frame, text=f"{spec.label}:", text_color=self.theme.fg).pack(
@@ -197,6 +218,83 @@ class MainWindow:
         self.code_input.insert("1.0", self.preset.source)
         self._clear_line_highlight()
         self._log(f"Loaded {self.preset.name}.")
+
+    def _rebuild_renderer(self) -> None:
+        """Rebuilds just the renderer against the current canvas model at
+        `self.render_scale` -- used both for a fresh algorithm load and for
+        zooming the same in-progress canvas up/down when presentation mode
+        is toggled, without touching canvas/algorithm state.
+
+        A running Runner is paused first: it drives itself via root.after()
+        ticks independent of this call, and a tick landing between the old
+        widget's destruction and the new renderer's listener registration
+        would notify a renderer whose Tk widget no longer exists. Canvas
+        listeners are then detached so the about-to-be-destroyed renderer's
+        callback doesn't linger on the canvas forever (listener lists are
+        append-only, and this method may run more than once per canvas
+        instance -- unlike a fresh algorithm load, which always pairs a new
+        canvas with a new renderer)."""
+        if self.runner is not None:
+            self.runner.pause()
+        if hasattr(self.canvas, "detach_listeners"):
+            self.canvas.detach_listeners()
+        for widget in self.canvas_frame.winfo_children():
+            widget.destroy()
+        renderer_cls = self.canvas_type.renderers["tk"]
+        try:
+            self.renderer = renderer_cls(self.canvas_frame, self.canvas, theme=self.theme, scale=self.render_scale)
+        except TypeError:
+            # Third-party/older renderers (e.g. a plugin built before
+            # presentation mode existed) may not accept `scale` -- fall
+            # back to unscaled instead of crashing the whole app over it.
+            self.renderer = renderer_cls(self.canvas_frame, self.canvas, theme=self.theme)
+        self.renderer.widget.pack()
+
+    def toggle_presentation(self) -> None:
+        if self.presentation:
+            self.exit_presentation()
+        else:
+            self.enter_presentation()
+
+    def enter_presentation(self) -> None:
+        if self.presentation or self.renderer is None:
+            return
+        self.presentation = True
+        self.render_scale = self._compute_presentation_scale()
+        self._layout_presentation()
+        self._rebuild_renderer()
+        if hasattr(self.root, "attributes"):
+            try:
+                self.root.attributes("-fullscreen", True)
+            except tk.TclError:
+                pass
+        self.present_button.configure(text="Exit Presentation")
+        self._log("Entered presentation mode — press Esc or Exit Presentation to leave.")
+
+    def exit_presentation(self) -> None:
+        if not self.presentation:
+            return
+        self.presentation = False
+        self.render_scale = 1.0
+        if hasattr(self.root, "attributes"):
+            try:
+                self.root.attributes("-fullscreen", False)
+            except tk.TclError:
+                pass
+        self._layout_normal()
+        self._rebuild_renderer()
+        self.present_button.configure(text="Present")
+        self._log("Exited presentation mode.")
+
+    def _compute_presentation_scale(self) -> float:
+        natural_w = int(float(self.renderer.widget.cget("width")))
+        natural_h = int(float(self.renderer.widget.cget("height")))
+        if not hasattr(self.root, "winfo_screenwidth"):
+            return 1.0
+        screen_w = self.root.winfo_screenwidth()
+        screen_h = self.root.winfo_screenheight()
+        scale = min((screen_w * 0.85) / natural_w, (screen_h * 0.75) / natural_h)
+        return max(1.0, min(scale, 4.0))
 
     def _log(self, message: str) -> None:
         self.status.insert(tk.END, message + "\n")

@@ -170,6 +170,27 @@ is enough for a presentation-sized network).
 This is also the format the in-app graph editor writes when you save a
 hand-built network as a preset.
 
+## In-app graph editor
+
+Click **New Network…** in the toolbar to open a point-and-click editor for
+building a custom weighted network instead of hand-writing TOML: **Add
+Node** (click empty canvas), **Add Edge** (click two nodes, then enter a
+weight), **Set Start** / **Set Goal** (click a node), **Delete** (click a
+node or an edge's midpoint). **Save as Preset…** writes it out via the
+format above, pre-filled with the Dijkstra template from
+`dijkstra-shortest-path.toml`, and it shows up in the picker immediately.
+
+## Presentation mode
+
+Click **Present** to switch to a canvas-only view for showing the
+visualization to an audience: the code
+editor, input fields, and status log are hidden, the canvas is rendered at
+a larger scale computed from your screen size, and the window goes
+full-screen. Play/Pause/Step/Reset and the speed slider stay available.
+Press **Esc** or click **Exit Presentation** to return to the normal view;
+an in-progress run is preserved across the switch (only the renderer is
+rebuilt, not the algorithm's canvas state).
+
 ## Writing a plugin canvas type
 
 If no built-in canvas type fits (you need a new *shape* of visualization,

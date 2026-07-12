@@ -75,3 +75,18 @@ def test_weight_looks_up_explicit_weights_either_direction():
 def test_labels_default_empty():
     graph = make_graph()
     assert graph.labels == {}
+
+
+def test_detach_listeners_stops_further_notifications():
+    graph = make_graph()
+    node_events = []
+    clear_events = []
+    graph.on_node(lambda n, s: node_events.append((n, s)))
+    graph.on_clear(lambda: clear_events.append(True))
+
+    graph.detach_listeners()
+    graph.visit(1)
+    graph.clear()
+
+    assert node_events == []
+    assert clear_events == []

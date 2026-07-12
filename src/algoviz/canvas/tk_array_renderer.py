@@ -18,14 +18,16 @@ class TkArrayRenderer:
         height: int = 320,
         bar_gap: int = 6,
         theme: ThemeTokens = DARK,
+        scale: float = 1.0,
     ):
         self.array = array
-        self.width = width
-        self.height = height
-        self.bar_gap = bar_gap
+        self.width = int(width * scale)
+        self.height = int(height * scale)
+        self.bar_gap = int(bar_gap * scale)
         self.theme = theme
+        self._font_size = max(8, round(9 * scale))
         self.widget = tk.Canvas(
-            master, width=width, height=height, background=theme.array_background, highlightthickness=0
+            master, width=self.width, height=self.height, background=theme.array_background, highlightthickness=0
         )
         self._bar_ids: list[int] = []
         self._label_ids: list[int] = []
@@ -55,7 +57,11 @@ class TkArrayRenderer:
             self._bar_ids.append(rect)
             if bar_w >= 14:
                 label = self.widget.create_text(
-                    x0 + bar_w / 2, max(y0 - 10, label_space / 2), text=str(v), fill=self.theme.fg, font=("", 9)
+                    x0 + bar_w / 2,
+                    max(y0 - 10, label_space / 2),
+                    text=str(v),
+                    fill=self.theme.fg,
+                    font=("", self._font_size),
                 )
                 self._label_ids.append(label)
 

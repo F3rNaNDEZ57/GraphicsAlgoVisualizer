@@ -42,3 +42,17 @@ def test_clear_restores_initial_values():
     assert array.values == [1, 3, 2]
     array.clear()
     assert array.values == [3, 1, 2]
+
+
+def test_detach_listeners_stops_further_notifications():
+    array = ArrayCanvas([1, 2, 3])
+    changes = []
+    highlights = []
+    array.on_change(lambda: changes.append(list(array.values)))
+    array.on_highlight(lambda idx, kind: highlights.append((idx, kind)))
+
+    array.detach_listeners()
+    array.swap(0, 1)
+
+    assert changes == []
+    assert highlights == []

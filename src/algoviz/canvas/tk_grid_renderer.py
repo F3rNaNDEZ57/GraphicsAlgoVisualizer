@@ -12,19 +12,32 @@ from .grid_canvas import GridCanvas
 
 
 class TkGridRenderer:
-    def __init__(self, master: tk.Misc, grid: GridCanvas, cell_size: int = 18, theme: ThemeTokens = DARK):
+    def __init__(
+        self,
+        master: tk.Misc,
+        grid: GridCanvas,
+        cell_size: int = 18,
+        theme: ThemeTokens = DARK,
+        scale: float = 1.0,
+    ):
         self.grid = grid
-        self.cell_size = cell_size
+        self.cell_size = max(1, round(cell_size * scale))
         self.theme = theme
         self.widget = tk.Canvas(
             master,
-            width=grid.width * cell_size,
-            height=grid.height * cell_size,
+            width=grid.width * self.cell_size,
+            height=grid.height * self.cell_size,
             background=grid.background,
             highlightthickness=0,
         )
         self._rects: dict[tuple[int, int], int] = {}
         self._draw_grid_lines()
+        # Reflects any pixels already plotted before this renderer existed
+        # (e.g. a renderer rebuilt mid-run for presentation-mode zoom) --
+        # mirrors how the array/graph renderers redraw full current state
+        # on construction instead of only listening for future changes.
+        for (x, y), color in grid.plotted_pixels().items():
+            self._draw_pixel(x, y, color)
         grid.on_pixel(self._draw_pixel)
         grid.on_clear(self._redraw_all)
 

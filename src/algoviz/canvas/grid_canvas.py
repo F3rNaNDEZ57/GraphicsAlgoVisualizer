@@ -24,6 +24,14 @@ class GridCanvas:
     def on_clear(self, listener: Callable[[], None]) -> None:
         self._clear_listeners.append(listener)
 
+    def detach_listeners(self) -> None:
+        """Drops every registered listener -- used when a renderer bound to
+        this canvas is being replaced (e.g. presentation-mode zoom), so the
+        old renderer's now-destroyed Tk widget doesn't keep getting notified
+        alongside the new one."""
+        self._pixel_listeners.clear()
+        self._clear_listeners.clear()
+
     def plot_pixel(self, x: int, y: int, color: str | None = None) -> None:
         x, y = int(x), int(y)
         if not (0 <= x < self.width and 0 <= y < self.height):

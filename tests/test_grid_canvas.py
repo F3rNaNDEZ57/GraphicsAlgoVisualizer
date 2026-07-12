@@ -39,3 +39,18 @@ def test_clear_resets_cells_and_notifies_listeners():
 def test_color_at_defaults_to_background():
     grid = GridCanvas(5, 5, background="black")
     assert grid.color_at(2, 2) == "black"
+
+
+def test_detach_listeners_stops_further_notifications():
+    grid = GridCanvas(5, 5)
+    pixel_events = []
+    clear_events = []
+    grid.on_pixel(lambda x, y, color: pixel_events.append((x, y, color)))
+    grid.on_clear(lambda: clear_events.append(True))
+
+    grid.detach_listeners()
+    grid.plot_pixel(0, 0)
+    grid.clear()
+
+    assert pixel_events == []
+    assert clear_events == []

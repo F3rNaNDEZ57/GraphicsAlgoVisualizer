@@ -22,6 +22,14 @@ class ArrayCanvas:
     def on_highlight(self, listener: Callable[[list[int], str], None]) -> None:
         self._highlight_listeners.append(listener)
 
+    def detach_listeners(self) -> None:
+        """Drops every registered listener -- used when a renderer bound to
+        this canvas is being replaced (e.g. presentation-mode zoom), so the
+        old renderer's now-destroyed Tk widget doesn't keep getting notified
+        alongside the new one."""
+        self._change_listeners.clear()
+        self._highlight_listeners.clear()
+
     def get(self, i: int) -> int:
         return self.values[int(i)]
 

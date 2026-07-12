@@ -52,6 +52,14 @@ class GraphCanvas:
     def on_clear(self, listener: Callable[[], None]) -> None:
         self._clear_listeners.append(listener)
 
+    def detach_listeners(self) -> None:
+        """Drops every registered listener -- used when a renderer bound to
+        this canvas is being replaced (e.g. presentation-mode zoom), so the
+        old renderer's now-destroyed Tk widget doesn't keep getting notified
+        alongside the new one."""
+        self._node_listeners.clear()
+        self._clear_listeners.clear()
+
     def neighbors(self, node: int) -> list[int]:
         return list(self.edges.get(int(node), []))
 
