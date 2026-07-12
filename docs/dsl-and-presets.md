@@ -77,7 +77,7 @@ Which names exist depends on the **canvas type** the preset mounts — see
 |---|---|---|
 | `grid` | `PlotPixel(x, y, color=None)` | — |
 | `array` | `Swap(i, j)`, `SetValue(i, val)`, `Compare(i, j)` | `Value(i)`, `Length()` |
-| `graph` | `Visit(node)`, `Highlight(node, state=None)` | `Neighbors(node)`, `NodeCount()`, `Start()`, `Goal()` |
+| `graph` | `Visit(node)`, `Highlight(node, state=None)` | `Neighbors(node)`, `NodeCount()`, `Start()`, `Goal()`, `Weight(a, b)` |
 
 Plus five always-available plain builtins regardless of canvas type:
 `round`, `abs`, `len`, `int`, `range`.
@@ -135,7 +135,40 @@ labeled fields above the canvas.
 
 `graph` canvases take a `[canvas] maze = [...]` — a list of equal-length
 strings using `S` (start), `G` (goal), `#` (wall), `.` (open). See
-`src/algoviz/presets/bfs-pathfinding.toml`.
+`src/algoviz/presets/bfs-pathfinding.toml`. Every maze edge costs `1` via
+`Weight()`'s default, so BFS-style algorithms can ignore weights entirely.
+
+### Example: graph canvas custom weighted network format
+
+For an arbitrary network (not a grid maze) — the shape Dijkstra/A*/Prim's/
+Kruskal's need — a `graph` canvas can instead take explicit `nodes`/`edges`:
+
+```toml
+[canvas]
+start = 0
+goal = 2
+nodes = [
+  {id = 0, x = 80, y = 200, label = "A"},   # label is optional
+  {id = 1, x = 220, y = 80, label = "B"},
+  {id = 2, x = 380, y = 200, label = "C"},
+]
+edges = [
+  {from = 0, to = 1, weight = 4},           # weight defaults to 1 if omitted
+  {from = 1, to = 2, weight = 7},
+]
+```
+
+`x`/`y` are pixel coordinates (not grid cells) — place nodes wherever reads
+best for your layout. Edges are undirected: `weight` applies to `Weight(a,
+b)` regardless of query direction. A graph built this way renders weight
+labels on its edges; a maze-built graph doesn't (weights are all `1` and
+would just be visual noise). See `src/algoviz/presets/dijkstra-shortest-path.toml`
+for a complete example, including the array-backed O(V²) Dijkstra pseudocode
+(no heap builtin needed — a linear scan for the minimum unvisited distance
+is enough for a presentation-sized network).
+
+This is also the format the in-app graph editor writes when you save a
+hand-built network as a preset.
 
 ## Writing a plugin canvas type
 

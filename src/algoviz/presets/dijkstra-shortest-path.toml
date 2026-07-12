@@ -1,0 +1,65 @@
+[preset]
+name = "Dijkstra Shortest Path"
+canvas = "graph"
+description = "Weighted shortest path on a custom network -- lowest total edge weight, not fewest hops."
+source = '''
+n = NodeCount()
+dist = [999999] * n
+visited = [0] * n
+parent = [-1] * n
+dist[Start()] = 0
+done = 0
+while done == 0:
+    u = -1
+    best = 999999
+    k = 0
+    while k < n:
+        if visited[k] == 0 and dist[k] < best:
+            best = dist[k]
+            u = k
+        k = k + 1
+    if u == -1:
+        done = 1
+    else:
+        visited[u] = 1
+        Visit(u)
+        if u == Goal():
+            done = 1
+        else:
+            for nb in Neighbors(u):
+                if visited[nb] == 0:
+                    w = Weight(u, nb)
+                    new_dist = dist[u] + w
+                    if new_dist < dist[nb]:
+                        dist[nb] = new_dist
+                        parent[nb] = u
+
+if visited[Goal()] == 1:
+    node = Goal()
+    while node != Start():
+        Highlight(node)
+        node = parent[node]
+'''
+
+[canvas]
+start = 0
+goal = 5
+nodes = [
+  {id = 0, x = 80, y = 200, label = "A"},
+  {id = 1, x = 220, y = 80, label = "B"},
+  {id = 2, x = 220, y = 320, label = "C"},
+  {id = 3, x = 380, y = 80, label = "D"},
+  {id = 4, x = 380, y = 320, label = "E"},
+  {id = 5, x = 520, y = 200, label = "F"},
+]
+edges = [
+  {from = 0, to = 1, weight = 4},
+  {from = 0, to = 2, weight = 2},
+  {from = 1, to = 2, weight = 1},
+  {from = 1, to = 3, weight = 5},
+  {from = 2, to = 3, weight = 8},
+  {from = 2, to = 4, weight = 10},
+  {from = 3, to = 4, weight = 2},
+  {from = 3, to = 5, weight = 6},
+  {from = 4, to = 5, weight = 3},
+]
