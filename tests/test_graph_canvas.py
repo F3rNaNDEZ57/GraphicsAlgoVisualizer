@@ -1,4 +1,4 @@
-from algoviz.canvas.graph_canvas import DEFAULT_COLOR, GOAL_COLOR, PATH_COLOR, START_COLOR, VISITED_COLOR, GraphCanvas
+from algoviz.canvas.graph_canvas import DEFAULT_STATE, GOAL_STATE, PATH_STATE, START_STATE, VISITED_STATE, GraphCanvas
 
 
 def make_graph():
@@ -7,11 +7,11 @@ def make_graph():
     return GraphCanvas(positions, edges, start=0, goal=2)
 
 
-def test_start_and_goal_colored_on_construction():
+def test_start_and_goal_states_on_construction():
     graph = make_graph()
-    assert graph.color_of(0) == START_COLOR
-    assert graph.color_of(2) == GOAL_COLOR
-    assert graph.color_of(1) == DEFAULT_COLOR
+    assert graph.state_of(0) == START_STATE
+    assert graph.state_of(2) == GOAL_STATE
+    assert graph.state_of(1) == DEFAULT_STATE
 
 
 def test_neighbors():
@@ -26,29 +26,29 @@ def test_get_start_and_get_goal():
     assert graph.get_goal() == 2
 
 
-def test_visit_colors_node_but_not_start_or_goal():
+def test_visit_sets_state_but_not_start_or_goal():
     graph = make_graph()
     events = []
-    graph.on_node(lambda n, c: events.append((n, c)))
+    graph.on_node(lambda n, s: events.append((n, s)))
 
     graph.visit(1)
     graph.visit(0)  # visiting start should be a no-op visually
 
-    assert graph.color_of(1) == VISITED_COLOR
-    assert graph.color_of(0) == START_COLOR
-    assert events == [(1, VISITED_COLOR)]
+    assert graph.state_of(1) == VISITED_STATE
+    assert graph.state_of(0) == START_STATE
+    assert events == [(1, VISITED_STATE)]
 
 
 def test_highlight_marks_path():
     graph = make_graph()
     graph.highlight(1)
-    assert graph.color_of(1) == PATH_COLOR
+    assert graph.state_of(1) == PATH_STATE
 
 
-def test_clear_resets_colors():
+def test_clear_resets_states():
     graph = make_graph()
     graph.visit(1)
     graph.clear()
-    assert graph.color_of(1) == DEFAULT_COLOR
-    assert graph.color_of(0) == START_COLOR
-    assert graph.color_of(2) == GOAL_COLOR
+    assert graph.state_of(1) == DEFAULT_STATE
+    assert graph.state_of(0) == START_STATE
+    assert graph.state_of(2) == GOAL_STATE

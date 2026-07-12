@@ -1,6 +1,6 @@
 from collections import deque
 
-from algoviz.canvas.graph_canvas import PATH_COLOR, GraphCanvas
+from algoviz.canvas.graph_canvas import PATH_STATE, GraphCanvas
 from algoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_maze
 from algoviz.pseudocode.interpreter import Interpreter
 
@@ -43,7 +43,7 @@ def test_bfs_reaches_goal_and_highlights_shortest_path():
     intermediate_nodes = set(expected_path) - {START, GOAL}
 
     for node in intermediate_nodes:
-        assert graph.color_of(node) == PATH_COLOR, f"node {node} on shortest path not highlighted"
+        assert graph.state_of(node) == PATH_STATE, f"node {node} on shortest path not highlighted"
 
 
 def test_bfs_terminates_and_produces_steps():

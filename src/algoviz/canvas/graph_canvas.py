@@ -2,17 +2,22 @@
 No rendering/GUI dependency. Positions and edges are fixed at construction;
 pseudocode reads adjacency through Neighbors()/NodeCount() and marks
 visited/path nodes through Visit()/Highlight().
+
+Broadcasts semantic *states* ("default"/"start"/"goal"/"visited"/"path"),
+not colors -- the renderer maps state to a theme color. This mirrors
+ArrayCanvas's "compare"/"swap"/"write" kinds; GraphCanvas used to bake hex
+colors straight into the model, which meant it couldn't be themed.
 """
 
 from __future__ import annotations
 
 from typing import Callable
 
-DEFAULT_COLOR = "#cccccc"
-START_COLOR = "#4da3ff"
-GOAL_COLOR = "#4caf50"
-VISITED_COLOR = "#ffd23f"
-PATH_COLOR = "#ff5d5d"
+DEFAULT_STATE = "default"
+START_STATE = "start"
+GOAL_STATE = "goal"
+VISITED_STATE = "visited"
+PATH_STATE = "path"
 
 
 class GraphCanvas:
@@ -27,9 +32,9 @@ class GraphCanvas:
         self.edges = edges
         self.start = start
         self.goal = goal
-        self._colors: dict[int, str] = {n: DEFAULT_COLOR for n in positions}
-        self._colors[start] = START_COLOR
-        self._colors[goal] = GOAL_COLOR
+        self._states: dict[int, str] = {n: DEFAULT_STATE for n in positions}
+        self._states[start] = START_STATE
+        self._states[goal] = GOAL_STATE
         self._node_listeners: list[Callable[[int, str], None]] = []
         self._clear_listeners: list[Callable[[], None]] = []
 
@@ -55,30 +60,30 @@ class GraphCanvas:
         node = int(node)
         if node in (self.start, self.goal):
             return
-        self._colors[node] = VISITED_COLOR
+        self._states[node] = VISITED_STATE
         self._notify(node)
 
-    def highlight(self, node: int, color: str | None = None) -> None:
+    def highlight(self, node: int, state: str | None = None) -> None:
         node = int(node)
         if node in (self.start, self.goal):
             return
-        self._colors[node] = color or PATH_COLOR
+        self._states[node] = state or PATH_STATE
         self._notify(node)
 
-    def color_of(self, node: int) -> str:
-        return self._colors[node]
+    def state_of(self, node: int) -> str:
+        return self._states[node]
 
     def clear(self) -> None:
         for n in self.positions:
             if n == self.start:
-                self._colors[n] = START_COLOR
+                self._states[n] = START_STATE
             elif n == self.goal:
-                self._colors[n] = GOAL_COLOR
+                self._states[n] = GOAL_STATE
             else:
-                self._colors[n] = DEFAULT_COLOR
+                self._states[n] = DEFAULT_STATE
         for listener in self._clear_listeners:
             listener()
 
     def _notify(self, node: int) -> None:
         for listener in self._node_listeners:
-            listener(node, self._colors[node])
+            listener(node, self._states[node])
