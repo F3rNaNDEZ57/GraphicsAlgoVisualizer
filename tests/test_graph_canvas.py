@@ -1,4 +1,4 @@
-from algoviz.canvas.graph_canvas import DEFAULT_STATE, GOAL_STATE, PATH_STATE, START_STATE, VISITED_STATE, GraphCanvas
+from pyalgoviz.canvas.graph_canvas import DEFAULT_STATE, GOAL_STATE, PATH_STATE, START_STATE, VISITED_STATE, GraphCanvas
 
 
 def make_graph():

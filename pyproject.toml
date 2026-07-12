@@ -1,25 +1,49 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "algoviz"
-version = "0.1.0"
+name = "pyalgoviz"
+dynamic = ["version"]
 description = "Pseudocode-driven 2D algorithm visualizer"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Kavindu Fernando", email = "kavindufernando329@gmail.com" }]
 requires-python = ">=3.11"
+keywords = ["algorithm-visualization", "tkinter", "education", "pseudocode", "dsl"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Education",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = ["customtkinter>=5.2"]
+
+[project.urls]
+Homepage = "https://github.com/F3rNaNDEZ57/GraphicsAlgoVisualizer"
+Repository = "https://github.com/F3rNaNDEZ57/GraphicsAlgoVisualizer"
+Issues = "https://github.com/F3rNaNDEZ57/GraphicsAlgoVisualizer/issues"
 
 [project.optional-dependencies]
 dev = ["pytest"]
 
 [project.scripts]
-algoviz = "algoviz.app:main"
+pyalgoviz = "pyalgoviz.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-algoviz = ["presets/*.toml"]
+pyalgoviz = ["presets/*.toml"]
+
+[tool.setuptools.dynamic]
+version = { attr = "pyalgoviz.__version__" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

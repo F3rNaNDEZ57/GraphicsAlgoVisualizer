@@ -1,5 +1,5 @@
 def main() -> None:
-    from algoviz.ui.main_window import launch
+    from pyalgoviz.ui.main_window import launch
 
     launch()
 

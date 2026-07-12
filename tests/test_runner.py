@@ -1,6 +1,6 @@
-from algoviz.engine.playback import PlaybackState
-from algoviz.engine.runner import Runner
-from algoviz.pseudocode.errors import PseudocodeError
+from pyalgoviz.engine.playback import PlaybackState
+from pyalgoviz.engine.runner import Runner
+from pyalgoviz.pseudocode.errors import PseudocodeError
 
 
 class FakeScheduler:

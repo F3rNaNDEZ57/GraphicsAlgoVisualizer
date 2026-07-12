@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from algoviz.theme import DARK, ThemeTokens, graph_state_color
+from pyalgoviz.theme import DARK, ThemeTokens, graph_state_color
 
 from .graph_canvas import GraphCanvas
 

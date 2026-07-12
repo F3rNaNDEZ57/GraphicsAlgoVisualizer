@@ -1,7 +1,7 @@
 import pytest
 
-from algoviz.canvas.grid_canvas import GridCanvas
-from algoviz.pseudocode.interpreter import Interpreter
+from pyalgoviz.canvas.grid_canvas import GridCanvas
+from pyalgoviz.pseudocode.interpreter import Interpreter
 
 from conftest import bundled_preset
 

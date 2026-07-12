@@ -1,9 +1,9 @@
 """Loads canvas type plugins from two sources, neither requiring any edit
-to algoviz's own source:
+to pyalgoviz's own source:
 
 1. Pip-installed packages that publish a CanvasType via the
-   "algoviz.canvases" entry point group.
-2. Drop-in scripts in ~/.algoviz/plugins/*.py, each exposing a
+   "pyalgoviz.canvases" entry point group.
+2. Drop-in scripts in ~/.pyalgoviz/plugins/*.py, each exposing a
    module-level CANVAS_TYPE -- a power-user door that runs arbitrary
    local Python at the same trust level as installing a package.
 
@@ -18,10 +18,10 @@ import importlib.metadata
 import importlib.util
 from pathlib import Path
 
-from algoviz.canvas.registry import register
+from pyalgoviz.canvas.registry import register
 
-ENTRY_POINT_GROUP = "algoviz.canvases"
-DEFAULT_PLUGINS_DIR = Path.home() / ".algoviz" / "plugins"
+ENTRY_POINT_GROUP = "pyalgoviz.canvases"
+DEFAULT_PLUGINS_DIR = Path.home() / ".pyalgoviz" / "plugins"
 
 
 def load_entry_point_plugins(group: str = ENTRY_POINT_GROUP) -> list[str]:
@@ -42,7 +42,7 @@ def load_drop_in_plugins(directory: Path = DEFAULT_PLUGINS_DIR) -> list[str]:
 
     for path in sorted(directory.glob("*.py")):
         try:
-            spec = importlib.util.spec_from_file_location(f"algoviz_plugin_{path.stem}", path)
+            spec = importlib.util.spec_from_file_location(f"pyalgoviz_plugin_{path.stem}", path)
             if spec is None or spec.loader is None:
                 errors.append(f"plugin '{path.name}': could not load module spec")
                 continue

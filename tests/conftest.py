@@ -1,6 +1,6 @@
 import pytest
 
-from algoviz.preset_loader import BUNDLED_PRESETS_DIR, LoadedPreset, load_all_presets
+from pyalgoviz.preset_loader import BUNDLED_PRESETS_DIR, LoadedPreset, load_all_presets
 
 
 def bundled_preset(name: str) -> LoadedPreset:

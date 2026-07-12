@@ -1,5 +1,5 @@
-from algoviz.canvas import registry
-from algoviz.canvas.registry import CanvasType, ParamSpec
+from pyalgoviz.canvas import registry
+from pyalgoviz.canvas.registry import CanvasType, ParamSpec
 
 
 def test_register_and_get_roundtrip():
@@ -28,7 +28,7 @@ def test_get_unknown_type_raises_with_available_list():
 
 
 def test_builtin_canvas_types_are_registered_by_canvas_types_import():
-    import algoviz.canvas_types  # noqa: F401 -- triggers registration
+    import pyalgoviz.canvas_types  # noqa: F401 -- triggers registration
 
     types = registry.all_types()
     assert set(types) == {"grid", "array", "graph"}

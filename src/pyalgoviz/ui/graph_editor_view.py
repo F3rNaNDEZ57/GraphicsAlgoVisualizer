@@ -15,8 +15,8 @@ from typing import Callable
 
 import customtkinter as ctk
 
-from algoviz.preset_loader import LoadedPreset, USER_PRESETS_DIR, write_preset_file
-from algoviz.theme import DARK, ThemeTokens, graph_state_color
+from pyalgoviz.preset_loader import LoadedPreset, USER_PRESETS_DIR, write_preset_file
+from pyalgoviz.theme import DARK, ThemeTokens, graph_state_color
 
 from .graph_editor_model import GraphEditorModel
 

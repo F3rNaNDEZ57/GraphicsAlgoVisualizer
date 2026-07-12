@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from algoviz.theme import DARK, ThemeTokens
+from pyalgoviz.theme import DARK, ThemeTokens
 
 from .grid_canvas import GridCanvas
 

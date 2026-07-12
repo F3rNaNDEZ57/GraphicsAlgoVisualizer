@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyalgoviz-heap-canvas"
+version = "0.1.0"
+description = "Binary min-heap canvas plugin for pyalgoviz -- proves the plugin seam works without editing pyalgoviz core"
+license = "MIT"
+authors = [{ name = "Kavindu Fernando", email = "kavindufernando329@gmail.com" }]
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = ["pyalgoviz"]
+
+[project.entry-points."pyalgoviz.canvases"]
+heap = "pyalgoviz_heap_canvas:HEAP_CANVAS_TYPE"
+
+[tool.setuptools.packages.find]
+where = ["src"]

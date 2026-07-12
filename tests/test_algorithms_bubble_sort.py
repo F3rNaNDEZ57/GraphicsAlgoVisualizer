@@ -1,7 +1,7 @@
 import pytest
 
-from algoviz.canvas.array_canvas import ArrayCanvas
-from algoviz.pseudocode.interpreter import Interpreter
+from pyalgoviz.canvas.array_canvas import ArrayCanvas
+from pyalgoviz.pseudocode.interpreter import Interpreter
 
 from conftest import bundled_preset
 

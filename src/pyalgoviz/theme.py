@@ -10,7 +10,7 @@ import tomllib
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
-USER_THEME_PATH = Path.home() / ".algoviz" / "theme.toml"
+USER_THEME_PATH = Path.home() / ".pyalgoviz" / "theme.toml"
 
 
 @dataclass(frozen=True)

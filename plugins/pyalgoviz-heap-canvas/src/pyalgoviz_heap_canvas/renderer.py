@@ -1,5 +1,5 @@
 """Tkinter rendering of a HeapCanvas as a binary tree -- a rendering
-shape none of algoviz's built-in canvases have (linear pixels/bars vs.
+shape none of pyalgoviz's built-in canvases have (linear pixels/bars vs.
 free-form graph), which is part of what this plugin proves.
 """
 
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from algoviz.theme import DARK, ThemeTokens, array_kind_color
+from pyalgoviz.theme import DARK, ThemeTokens, array_kind_color
 
 from .canvas import HeapCanvas
 

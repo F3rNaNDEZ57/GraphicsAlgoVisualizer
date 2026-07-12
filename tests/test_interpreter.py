@@ -1,8 +1,8 @@
 import pytest
 
-from algoviz.pseudocode.errors import PseudocodeError
-from algoviz.pseudocode.interpreter import Interpreter
-from algoviz.pseudocode.step_event import StepEvent
+from pyalgoviz.pseudocode.errors import PseudocodeError
+from pyalgoviz.pseudocode.interpreter import Interpreter
+from pyalgoviz.pseudocode.step_event import StepEvent
 
 
 def run_all(source: str, canvas):

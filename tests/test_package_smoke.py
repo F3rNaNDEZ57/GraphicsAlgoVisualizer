@@ -1,5 +1,5 @@
-import algoviz
+import pyalgoviz
 
 
 def test_package_importable():
-    assert algoviz.__version__ == "0.1.0"
+    assert pyalgoviz.__version__ == "0.1.0"

@@ -1,9 +1,9 @@
 from collections import deque
 
-from algoviz.canvas.graph_canvas import PATH_STATE, GraphCanvas
-from algoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_maze
-from algoviz.pseudocode.interpreter import Interpreter
-from algoviz.pseudocode.step_event import StepEvent
+from pyalgoviz.canvas.graph_canvas import PATH_STATE, GraphCanvas
+from pyalgoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_maze
+from pyalgoviz.pseudocode.interpreter import Interpreter
+from pyalgoviz.pseudocode.step_event import StepEvent
 
 from conftest import bundled_preset
 

@@ -1,6 +1,6 @@
 import pytest
 
-from algoviz.canvas.grid_canvas import GridCanvas
+from pyalgoviz.canvas.grid_canvas import GridCanvas
 
 
 def test_plot_pixel_records_color_and_notifies_listeners():

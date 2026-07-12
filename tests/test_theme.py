@@ -1,4 +1,4 @@
-from algoviz.theme import (
+from pyalgoviz.theme import (
     BUILTIN_THEMES,
     DARK,
     LIGHT,

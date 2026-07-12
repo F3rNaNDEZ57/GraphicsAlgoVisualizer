@@ -1,5 +1,5 @@
 """Registers the "heap" canvas type. This is what's published via the
-algoviz.canvases entry point -- the only thing algoviz core needs to
+pyalgoviz.canvases entry point -- the only thing pyalgoviz core needs to
 discover this plugin is this one CanvasType instance.
 """
 
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from algoviz.canvas.registry import CanvasType, ParamSpec
+from pyalgoviz.canvas.registry import CanvasType, ParamSpec
 
 from .canvas import HeapCanvas
 from .renderer import TkHeapRenderer

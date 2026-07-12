@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from algoviz.preset_loader import LoadedPreset
+from pyalgoviz.preset_loader import LoadedPreset
 
 # Fallback only -- used if the bundled Dijkstra preset can't be loaded for
 # some reason. The real starting point is _default_network_source() below,
@@ -61,7 +61,7 @@ else:
 
 def _default_network_source() -> str:
     try:
-        from algoviz.preset_loader import BUNDLED_PRESETS_DIR, load_preset_file
+        from pyalgoviz.preset_loader import BUNDLED_PRESETS_DIR, load_preset_file
 
         return load_preset_file(BUNDLED_PRESETS_DIR / "dijkstra-shortest-path.toml").source
     except Exception:

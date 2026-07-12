@@ -1,8 +1,8 @@
 import pytest
 
-from algoviz.canvas.graph_type import parse_network
-from algoviz.preset_loader import load_preset_file, write_preset_file
-from algoviz.ui.graph_editor_model import GraphEditorModel
+from pyalgoviz.canvas.graph_type import parse_network
+from pyalgoviz.preset_loader import load_preset_file, write_preset_file
+from pyalgoviz.ui.graph_editor_model import GraphEditorModel
 
 from conftest import bundled_preset
 

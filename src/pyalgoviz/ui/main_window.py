@@ -12,23 +12,23 @@ from pathlib import Path
 
 import customtkinter as ctk
 
-import algoviz.canvas_types  # noqa: F401 -- side effect: registers grid/array/graph canvas types
-from algoviz.canvas.registry import ParamSpec, all_types as all_canvas_types, get as get_canvas_type
-from algoviz.engine.playback import PlaybackState
-from algoviz.engine.runner import Runner
-from algoviz.plugins import DEFAULT_PLUGINS_DIR, load_all_plugins
-from algoviz.ui.graph_editor_view import GraphEditorView
-from algoviz.preset_loader import (
+import pyalgoviz.canvas_types  # noqa: F401 -- side effect: registers grid/array/graph canvas types
+from pyalgoviz.canvas.registry import ParamSpec, all_types as all_canvas_types, get as get_canvas_type
+from pyalgoviz.engine.playback import PlaybackState
+from pyalgoviz.engine.runner import Runner
+from pyalgoviz.plugins import DEFAULT_PLUGINS_DIR, load_all_plugins
+from pyalgoviz.ui.graph_editor_view import GraphEditorView
+from pyalgoviz.preset_loader import (
     BUNDLED_PRESETS_DIR,
     USER_PRESETS_DIR,
     LoadedPreset,
     load_all_presets,
     write_preset_file,
 )
-from algoviz.pseudocode.errors import PseudocodeError
-from algoviz.pseudocode.interpreter import Interpreter
-from algoviz.pseudocode.step_event import StepEvent
-from algoviz.theme import DARK, ThemeTokens, load_theme
+from pyalgoviz.pseudocode.errors import PseudocodeError
+from pyalgoviz.pseudocode.interpreter import Interpreter
+from pyalgoviz.pseudocode.step_event import StepEvent
+from pyalgoviz.theme import DARK, ThemeTokens, load_theme
 
 CURRENT_LINE_TAG = "current_line"
 
@@ -225,7 +225,7 @@ class MainWindow:
         self.preset = self.presets[self.algo_menu.get()]
         self.canvas_type = get_canvas_type(self.preset.canvas_type_id)
         if hasattr(self.root, "title"):
-            self.root.title(f"AlgoViz — {self.preset.name}")
+            self.root.title(f"PyAlgoViz — {self.preset.name}")
         is_network = self.preset.canvas_type_id == "graph" and "nodes" in self.preset.canvas_params
         self.network_button.configure(text="Edit Network…" if is_network else "New Network…")
 

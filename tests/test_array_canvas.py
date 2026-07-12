@@ -1,4 +1,4 @@
-from algoviz.canvas.array_canvas import ArrayCanvas
+from pyalgoviz.canvas.array_canvas import ArrayCanvas
 
 
 def test_swap_mutates_values_and_notifies():

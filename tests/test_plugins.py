@@ -1,8 +1,8 @@
 import importlib.metadata
 
-from algoviz.canvas import registry
-from algoviz.canvas.registry import CanvasType, ParamSpec
-from algoviz.plugins import load_drop_in_plugins, load_entry_point_plugins
+from pyalgoviz.canvas import registry
+from pyalgoviz.canvas.registry import CanvasType, ParamSpec
+from pyalgoviz.plugins import load_drop_in_plugins, load_entry_point_plugins
 
 FAKE_CANVAS_TYPE = CanvasType(
     id="__test_plugin_canvas__",
@@ -29,7 +29,7 @@ class FakeEntryPoint:
 
 def test_load_entry_point_plugins_registers_valid_ones(monkeypatch):
     def fake_entry_points(*, group):
-        assert group == "algoviz.canvases"
+        assert group == "pyalgoviz.canvases"
         return [FakeEntryPoint("test_plugin", lambda: FAKE_CANVAS_TYPE)]
 
     monkeypatch.setattr(importlib.metadata, "entry_points", fake_entry_points)
@@ -58,7 +58,7 @@ def test_load_entry_point_plugins_collects_errors_without_raising(monkeypatch):
 def test_load_drop_in_plugins_registers_valid_module(tmp_path):
     plugin_file = tmp_path / "my_plugin.py"
     plugin_file.write_text(
-        "from algoviz.canvas.registry import CanvasType, ParamSpec\n"
+        "from pyalgoviz.canvas.registry import CanvasType, ParamSpec\n"
         "CANVAS_TYPE = CanvasType(\n"
         "    id='__test_dropin_canvas__',\n"
         "    canvas_params=[],\n"

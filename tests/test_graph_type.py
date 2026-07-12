@@ -1,4 +1,4 @@
-from algoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_maze, parse_network
+from pyalgoviz.canvas.graph_type import GRAPH_CANVAS_TYPE, parse_maze, parse_network
 
 SIMPLE_MAZE = ["S.", ".G"]
 

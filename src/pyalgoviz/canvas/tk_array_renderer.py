@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from algoviz.theme import DARK, ThemeTokens, array_kind_color
+from pyalgoviz.theme import DARK, ThemeTokens, array_kind_color
 
 from .array_canvas import ArrayCanvas
 

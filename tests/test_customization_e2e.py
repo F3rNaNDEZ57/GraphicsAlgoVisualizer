@@ -3,10 +3,10 @@ by writing one TOML file, with zero Python edits -- reusing the existing
 "array" canvas type's builtins (Value/SetValue/Length), no plugin needed.
 """
 
-import algoviz.canvas_types  # noqa: F401 -- registers grid/array/graph canvas types
-from algoviz.canvas.registry import get as get_canvas_type
-from algoviz.pseudocode.interpreter import Interpreter
-from algoviz.preset_loader import load_all_presets
+import pyalgoviz.canvas_types  # noqa: F401 -- registers grid/array/graph canvas types
+from pyalgoviz.canvas.registry import get as get_canvas_type
+from pyalgoviz.pseudocode.interpreter import Interpreter
+from pyalgoviz.preset_loader import load_all_presets
 
 INSERTION_SORT_TOML = """
 [preset]

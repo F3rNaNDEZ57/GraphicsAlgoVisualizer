@@ -30,10 +30,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from algoviz.canvas.registry import ParamSpec
+from pyalgoviz.canvas.registry import ParamSpec
 
 BUNDLED_PRESETS_DIR = Path(__file__).resolve().parent / "presets"
-USER_PRESETS_DIR = Path.home() / ".algoviz" / "presets"
+USER_PRESETS_DIR = Path.home() / ".pyalgoviz" / "presets"
 
 
 class PresetError(Exception):

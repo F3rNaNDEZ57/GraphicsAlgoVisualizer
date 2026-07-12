@@ -2,8 +2,8 @@ import tomllib
 
 import pytest
 
-from algoviz.canvas.registry import ParamSpec
-from algoviz.preset_loader import (
+from pyalgoviz.canvas.registry import ParamSpec
+from pyalgoviz.preset_loader import (
     LoadedPreset,
     PresetError,
     load_all_presets,

@@ -13,7 +13,7 @@ A pseudocode-driven 2D algorithm visualizer built with Python and CustomTkinter.
 - **Step-by-Step Playback** — Play, pause, step forward, adjust speed, and see line-by-line highlighting of the executing pseudocode.
 - **Presentation Mode** — A distraction-free, canvas-only view for demos and classroom walkthroughs.
 - **Theme System** — Centralized theme tokens drive all canvas and UI colors for a consistent look.
-- **Plugin Architecture** — Drop-in and entry-point based plugin loading. Extend the visualizer with custom canvas types (see the bundled `algoviz-heap-canvas` example).
+- **Plugin Architecture** — Drop-in and entry-point based plugin loading. Extend the visualizer with custom canvas types (see the bundled `pyalgoviz-heap-canvas` example).
 - **User Presets** — Save your own algorithms as `.toml` preset files and load them from a user presets directory.
 
 ---
@@ -71,13 +71,13 @@ pip install -e ".[dev]"
 ### 4. Run the Visualizer
 
 ```bash
-algoviz
+pyalgoviz
 ```
 
 Or run directly as a module:
 
 ```bash
-python -m algoviz.app
+python -m pyalgoviz.app
 ```
 
 ---
@@ -121,7 +121,7 @@ Tkinter is bundled with the standard Python installer from [python.org](https://
 
 ```
 GraphicsAlgoVisualizer/
-├── src/algoviz/
+├── src/pyalgoviz/
 │   ├── app.py                  # Entry point
 │   ├── theme.py                # Centralized theme tokens
 │   ├── canvas_types.py         # Side-effect import to register canvas types
@@ -152,7 +152,7 @@ GraphicsAlgoVisualizer/
 │       ├── graph_editor_model.py  # Headless graph editor model
 │       └── graph_editor_view.py   # Visual graph editor widget
 ├── plugins/                    # Drop-in plugin directory
-│   └── algoviz-heap-canvas/    # Example plugin
+│   └── pyalgoviz-heap-canvas/    # Example plugin
 ├── tests/                      # Test suite (pytest)
 ├── pyproject.toml              # Project metadata and build config
 └── .gitignore
@@ -182,7 +182,7 @@ pytest tests/test_interpreter.py
 
 ## 📝 Writing a Custom Preset
 
-Presets are `.toml` files that define an algorithm's pseudocode, canvas type, and parameters. Place them in the bundled `src/algoviz/presets/` directory or the user presets directory.
+Presets are `.toml` files that define an algorithm's pseudocode, canvas type, and parameters. Place them in the bundled `src/pyalgoviz/presets/` directory or the user presets directory.
 
 **Example — a simple grid algorithm:**
 
@@ -217,9 +217,9 @@ for x in Range(0, 10):
 The visualizer supports two plugin mechanisms:
 
 1. **Drop-in plugins** — Place a Python package in the `plugins/` directory. It will be auto-discovered on startup.
-2. **Entry-point plugins** — Register a `algoviz.canvas` entry point in your package's `pyproject.toml`. Installed packages with this entry point are loaded automatically.
+2. **Entry-point plugins** — Register a `pyalgoviz.canvases` entry point in your package's `pyproject.toml`. Installed packages with this entry point are loaded automatically.
 
-See [`plugins/algoviz-heap-canvas/`](plugins/algoviz-heap-canvas/) for a working example.
+See [`plugins/pyalgoviz-heap-canvas/`](plugins/pyalgoviz-heap-canvas/) for a working example.
 
 ---
 
@@ -237,4 +237,4 @@ See [`plugins/algoviz-heap-canvas/`](plugins/algoviz-heap-canvas/) for a working
 
 ## 📄 License
 
-This project is open source. See the repository for license details.
+MIT — see [LICENSE](LICENSE) for details.
