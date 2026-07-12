@@ -17,6 +17,7 @@ from algoviz.canvas.registry import ParamSpec, all_types as all_canvas_types, ge
 from algoviz.engine.playback import PlaybackState
 from algoviz.engine.runner import Runner
 from algoviz.plugins import DEFAULT_PLUGINS_DIR, load_all_plugins
+from algoviz.ui.graph_editor_view import GraphEditorView
 from algoviz.preset_loader import (
     BUNDLED_PRESETS_DIR,
     USER_PRESETS_DIR,
@@ -99,7 +100,10 @@ class MainWindow:
         )
         self.algo_menu.pack(side="left")
         ctk.CTkButton(top, text="Save preset…", command=self.save_preset, width=110).pack(
-            side="left", padx=(8, 8)
+            side="left", padx=(8, 4)
+        )
+        ctk.CTkButton(top, text="New Network…", command=self.open_graph_editor, width=120).pack(
+            side="left", padx=(0, 8)
         )
 
         self.input_frame = ctk.CTkFrame(self.root, fg_color=theme.panel_bg)
@@ -303,6 +307,13 @@ class MainWindow:
         self._log(f"Saved preset '{name}' to {path}")
         self._reload_preset_list(select=name)
         return path
+
+    def open_graph_editor(self) -> None:
+        GraphEditorView(self.root, theme=self.theme, user_dir=self.user_dir, on_saved=self._on_network_saved)
+
+    def _on_network_saved(self, name: str) -> None:
+        self._log(f"Saved network '{name}'.")
+        self._reload_preset_list(select=name)
 
 
 def launch() -> None:
