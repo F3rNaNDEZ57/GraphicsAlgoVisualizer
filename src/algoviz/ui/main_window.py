@@ -105,9 +105,11 @@ class MainWindow:
         ctk.CTkButton(self.top, text="Save preset…", command=self.save_preset, width=110).pack(
             side="left", padx=(8, 4)
         )
-        ctk.CTkButton(self.top, text="New Network…", command=self.open_graph_editor, width=120).pack(
-            side="left", padx=(0, 8)
+        ctk.CTkButton(self.top, text="Update Preset", command=self.update_preset, width=110).pack(
+            side="left", padx=(0, 4)
         )
+        self.network_button = ctk.CTkButton(self.top, text="New Network…", command=self.open_graph_editor, width=120)
+        self.network_button.pack(side="left", padx=(0, 8))
 
         self.input_frame = ctk.CTkFrame(self.root, fg_color=theme.panel_bg)
 
@@ -137,28 +139,55 @@ class MainWindow:
 
         self.canvas_frame = ctk.CTkFrame(self.root, fg_color=theme.bg)
 
+        # Always visible in both layouts (including presentation mode, where
+        # the status log is hidden) -- this is the one place ShowAnswer()
+        # output shows up, so it can't be something the user has to dig for.
+        self.answer_label = ctk.CTkLabel(
+            self.root, text="", text_color=theme.accent, font=ctk.CTkFont(size=16, weight="bold")
+        )
+
         self.status = ctk.CTkTextbox(self.root, width=680, height=110)
 
         self._layout_normal()
 
     def _layout_normal(self) -> None:
-        for widget in (self.top, self.input_frame, self.code_input, self.controls, self.canvas_frame, self.status):
+        widgets = (
+            self.top,
+            self.input_frame,
+            self.code_input,
+            self.controls,
+            self.canvas_frame,
+            self.answer_label,
+            self.status,
+        )
+        for widget in widgets:
             widget.pack_forget()
         self.top.pack(fill="x", padx=8, pady=(8, 4))
         self.input_frame.pack(fill="x", padx=8, pady=4)
         self.code_input.pack(padx=8, pady=4)
         self.controls.pack(fill="x", padx=8, pady=4)
         self.canvas_frame.pack(padx=8, pady=4)
+        self.answer_label.pack(padx=8, pady=(0, 4))
         self.status.pack(padx=8, pady=(4, 8))
 
     def _layout_presentation(self) -> None:
         # Hides everything but the canvas and a minimal playback bar --
         # the code editor, input fields, and status log are noise once
         # you're actually presenting the visualization.
-        for widget in (self.top, self.input_frame, self.code_input, self.controls, self.canvas_frame, self.status):
+        widgets = (
+            self.top,
+            self.input_frame,
+            self.code_input,
+            self.controls,
+            self.canvas_frame,
+            self.answer_label,
+            self.status,
+        )
+        for widget in widgets:
             widget.pack_forget()
         self.controls.pack(fill="x", padx=8, pady=8)
         self.canvas_frame.pack(expand=True)
+        self.answer_label.pack(pady=(0, 8))
 
     def _reload_preset_list(self, select: str | None = None) -> None:
         loaded, errors = load_all_presets(self.bundled_dir, self.user_dir)
@@ -197,6 +226,8 @@ class MainWindow:
         self.canvas_type = get_canvas_type(self.preset.canvas_type_id)
         if hasattr(self.root, "title"):
             self.root.title(f"AlgoViz — {self.preset.name}")
+        is_network = self.preset.canvas_type_id == "graph" and "nodes" in self.preset.canvas_params
+        self.network_button.configure(text="Edit Network…" if is_network else "New Network…")
 
         for widget in self.input_frame.winfo_children():
             widget.destroy()
@@ -217,6 +248,7 @@ class MainWindow:
         self.code_input.delete("1.0", tk.END)
         self.code_input.insert("1.0", self.preset.source)
         self._clear_line_highlight()
+        self._clear_answer()
         self._log(f"Loaded {self.preset.name}.")
 
     def _rebuild_renderer(self) -> None:
@@ -308,6 +340,20 @@ class MainWindow:
         self._highlight_line(event.lineno)
         args_repr = ", ".join(repr(a) for a in event.args)
         self._log(f"line {event.lineno}: {event.action}({args_repr})")
+        if event.action == "ShowAnswer" and event.args:
+            self._show_answer(event.args)
+
+    def _show_answer(self, args: tuple) -> None:
+        if len(args) == 1:
+            text = f"Answer: {args[0]}"
+        else:
+            label, values = args[0], args[1:]
+            text = f"{label}: " + ", ".join(str(v) for v in values)
+        self.answer_label.configure(text=text)
+        self._log(text)
+
+    def _clear_answer(self) -> None:
+        self.answer_label.configure(text="")
 
     def _highlight_line(self, lineno: int | None) -> None:
         self._clear_line_highlight()
@@ -374,6 +420,7 @@ class MainWindow:
         if self.canvas:
             self.canvas.clear()
         self._clear_line_highlight()
+        self._clear_answer()
 
     def save_preset(self) -> None:
         if self.preset is None:
@@ -382,6 +429,18 @@ class MainWindow:
         if not name:
             return
         self._do_save_preset(name)
+
+    def update_preset(self) -> None:
+        """Overwrites the currently loaded preset in place -- no rename
+        prompt, unlike save_preset() which always asks for a (possibly new)
+        name. _do_save_preset always writes to self.user_dir regardless of
+        where the original came from, so updating a bundled preset creates
+        a user-dir override rather than touching the packaged file --
+        consistent with the existing "user presets win on name collision"
+        rule everywhere else presets are loaded."""
+        if self.preset is None:
+            return
+        self._do_save_preset(self.preset.name)
 
     def _do_save_preset(self, name: str) -> Path | None:
         """The actual save logic, split out from save_preset() so it can be
@@ -407,7 +466,20 @@ class MainWindow:
         return path
 
     def open_graph_editor(self) -> None:
-        GraphEditorView(self.root, theme=self.theme, user_dir=self.user_dir, on_saved=self._on_network_saved)
+        # If the currently loaded preset is itself a custom weighted
+        # network (not a maze), open the editor pre-populated with it
+        # instead of a blank canvas -- otherwise there'd be no way to
+        # rename a node or tweak an edge on a network you already saved.
+        existing = None
+        if self.preset is not None and self.preset.canvas_type_id == "graph" and "nodes" in self.preset.canvas_params:
+            existing = self.preset
+        GraphEditorView(
+            self.root,
+            theme=self.theme,
+            user_dir=self.user_dir,
+            on_saved=self._on_network_saved,
+            existing_preset=existing,
+        )
 
     def _on_network_saved(self, name: str) -> None:
         self._log(f"Saved network '{name}'.")

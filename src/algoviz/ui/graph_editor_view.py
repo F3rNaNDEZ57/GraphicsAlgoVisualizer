@@ -15,7 +15,7 @@ from typing import Callable
 
 import customtkinter as ctk
 
-from algoviz.preset_loader import USER_PRESETS_DIR, write_preset_file
+from algoviz.preset_loader import LoadedPreset, USER_PRESETS_DIR, write_preset_file
 from algoviz.theme import DARK, ThemeTokens, graph_state_color
 
 from .graph_editor_model import GraphEditorModel
@@ -26,6 +26,7 @@ MODE_ADD_NODE = "add_node"
 MODE_ADD_EDGE = "add_edge"
 MODE_SET_START = "set_start"
 MODE_SET_GOAL = "set_goal"
+MODE_RENAME = "rename"
 MODE_DELETE = "delete"
 
 _MODE_LABELS = {
@@ -33,6 +34,7 @@ _MODE_LABELS = {
     MODE_ADD_EDGE: "Add Edge",
     MODE_SET_START: "Set Start",
     MODE_SET_GOAL: "Set Goal",
+    MODE_RENAME: "Rename",
     MODE_DELETE: "Delete",
 }
 
@@ -48,17 +50,20 @@ class GraphEditorView(ctk.CTkToplevel):
         theme: ThemeTokens = DARK,
         user_dir: Path = USER_PRESETS_DIR,
         on_saved: Callable[[str], None] | None = None,
+        existing_preset: LoadedPreset | None = None,
     ):
         super().__init__(master)
-        self.title("Network editor")
         self.theme = theme
         self.user_dir = user_dir
         self.on_saved = on_saved
-        self.model = GraphEditorModel()
+        self._editing_name = existing_preset.name if existing_preset is not None else None
+        self.model = GraphEditorModel.from_preset(existing_preset) if existing_preset is not None else GraphEditorModel()
+        self.title(f"Network editor — editing '{self._editing_name}'" if self._editing_name else "Network editor — new network")
         self.mode = MODE_ADD_NODE
         self._pending_edge_source: int | None = None
         self._mode_buttons: dict[str, ctk.CTkButton] = {}
         self._build_widgets()
+        self._redraw()  # shows any hydrated nodes/edges immediately, not just after the first click
 
     def _build_widgets(self) -> None:
         theme = self.theme
@@ -71,6 +76,10 @@ class GraphEditorView(ctk.CTkToplevel):
             self._mode_buttons[mode] = btn
         self._default_button_color = next(iter(self._mode_buttons.values())).cget("fg_color")
 
+        if self._editing_name is not None:
+            ctk.CTkButton(
+                toolbar, text=f"Update '{self._editing_name}'", command=self.update_existing, width=140
+            ).pack(side="right", padx=4)
         ctk.CTkButton(toolbar, text="Save as Preset…", command=self.save, width=130).pack(side="right", padx=4)
 
         self.status_label = ctk.CTkLabel(self, text="", text_color=theme.fg)
@@ -114,6 +123,8 @@ class GraphEditorView(ctk.CTkToplevel):
             if hit is not None:
                 self.model.set_goal(hit)
                 self._redraw()
+        elif self.mode == MODE_RENAME:
+            self._on_click_rename(x, y)
         elif self.mode == MODE_DELETE:
             self._on_click_delete(x, y)
 
@@ -148,6 +159,28 @@ class GraphEditorView(ctk.CTkToplevel):
         prompt so a smoke script can drive it directly."""
         self.model.connect(source, target, weight=weight)
         self._set_status(f"Connected {source} <-> {target} (weight {weight})")
+        self._redraw()
+
+    def _on_click_rename(self, x: int, y: int) -> None:
+        hit = self.model.node_near(x, y)
+        if hit is None:
+            return
+        current = self.model.nodes[hit].label
+        raw = ctk.CTkInputDialog(
+            text=f"New name for node {hit} (currently '{current or hit}'). Any name is fine:",
+            title="Rename node",
+        ).get_input()
+        if raw is None:
+            self._set_status("Cancelled")
+            return
+        self._do_rename(hit, raw)
+
+    def _do_rename(self, node_id: int, label: str) -> None:
+        """Testable core of renaming: bypasses the blocking name prompt so
+        a smoke script can drive it directly. `label` can be any string --
+        including empty, which falls back to the node's id when displayed."""
+        self.model.rename_node(node_id, label)
+        self._set_status(f"Renamed node {node_id} to '{label}'" if label else f"Cleared node {node_id}'s name")
         self._redraw()
 
     def _on_click_delete(self, x: int, y: int) -> None:
@@ -206,8 +239,20 @@ class GraphEditorView(ctk.CTkToplevel):
         name = ctk.CTkInputDialog(text="Preset name:", title="Save network").get_input()
         if not name:
             return
-        self._do_save(name)
-        self.destroy()
+        path = self._do_save(name)
+        if path is not None:
+            self.destroy()
+
+    def update_existing(self) -> None:
+        """Overwrites the network preset this editor was opened to edit, in
+        place -- no name prompt. Only available when the editor was opened
+        via an existing preset (see MainWindow.open_graph_editor), mirroring
+        MainWindow's own save_preset/update_preset split."""
+        if self._editing_name is None:
+            return
+        path = self._do_save(self._editing_name)
+        if path is not None:
+            self.destroy()
 
     def _do_save(self, name: str) -> Path | None:
         """Testable core of saving: bypasses the blocking name prompt (and

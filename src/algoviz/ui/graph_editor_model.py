@@ -12,11 +12,12 @@ from dataclasses import dataclass
 
 from algoviz.preset_loader import LoadedPreset
 
-# The bundled Dijkstra preset's pseudocode, reused verbatim as the starting
-# point for any network the editor saves -- a freshly authored network is
-# immediately runnable with a real weighted-shortest-path algorithm instead
-# of an empty editor buffer. See presets/dijkstra-shortest-path.toml.
-DEFAULT_NETWORK_SOURCE = """n = NodeCount()
+# Fallback only -- used if the bundled Dijkstra preset can't be loaded for
+# some reason. The real starting point is _default_network_source() below,
+# which reads presets/dijkstra-shortest-path.toml directly so the two never
+# drift out of sync (e.g. if that preset gains a ShowAnswer() call, every
+# network the editor saves gets it too, with no second copy to remember).
+_FALLBACK_NETWORK_SOURCE = """n = NodeCount()
 dist = [999999] * n
 visited = [0] * n
 parent = [-1] * n
@@ -52,7 +53,19 @@ if visited[Goal()] == 1:
     while node != Start():
         Highlight(node)
         node = parent[node]
+    ShowAnswer("Shortest path cost", dist[Goal()])
+else:
+    ShowAnswer("No path found")
 """
+
+
+def _default_network_source() -> str:
+    try:
+        from algoviz.preset_loader import BUNDLED_PRESETS_DIR, load_preset_file
+
+        return load_preset_file(BUNDLED_PRESETS_DIR / "dijkstra-shortest-path.toml").source
+    except Exception:
+        return _FALLBACK_NETWORK_SOURCE
 
 
 @dataclass
@@ -121,6 +134,42 @@ class GraphEditorModel:
             raise ValueError(f"unknown node {node_id}")
         self.goal = node_id
 
+    def rename_node(self, node_id: int, label: str) -> None:
+        if node_id not in self.nodes:
+            raise ValueError(f"unknown node {node_id}")
+        self.nodes[node_id].label = label
+
+    def load_network(self, nodes: list[dict], edges: list[dict], start: int | None, goal: int | None) -> None:
+        """Hydrates this model from an existing network preset's
+        canvas_params -- the nodes/edges/start/goal shape graph_type.py's
+        parse_network reads, i.e. exactly what to_preset() below produces.
+        Used to re-open a previously saved network for further editing
+        (renaming a node, adding an edge, moving start/goal) instead of
+        only ever being able to build one from scratch."""
+        self.nodes = {}
+        self.edges = []
+        for n in nodes:
+            node_id = int(n["id"])
+            self.nodes[node_id] = EditorNode(node_id, n["x"], n["y"], n.get("label", ""))
+        for e in edges:
+            self.edges.append(EditorEdge(int(e["from"]), int(e["to"]), float(e.get("weight", 1))))
+        self.start = int(start) if start is not None else None
+        self.goal = int(goal) if goal is not None else None
+        # Must continue from the highest existing id, or the next add_node()
+        # collides with an id already in use and corrupts the graph.
+        self._next_id = (max(self.nodes) + 1) if self.nodes else 0
+
+    @classmethod
+    def from_preset(cls, preset: LoadedPreset) -> "GraphEditorModel":
+        model = cls()
+        model.load_network(
+            preset.canvas_params.get("nodes", []),
+            preset.canvas_params.get("edges", []),
+            preset.canvas_params.get("start"),
+            preset.canvas_params.get("goal"),
+        )
+        return model
+
     def node_near(self, x: float, y: float, radius: float = 18) -> int | None:
         """Hit-test used by click handling: id of the nearest node within
         `radius`, or None if empty space was clicked."""
@@ -179,5 +228,5 @@ class GraphEditorModel:
                 "nodes": nodes_param,
                 "edges": edges_param,
             },
-            source=DEFAULT_NETWORK_SOURCE,
+            source=_default_network_source(),
         )

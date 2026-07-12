@@ -4,6 +4,8 @@ from algoviz.canvas.graph_type import parse_network
 from algoviz.preset_loader import load_preset_file, write_preset_file
 from algoviz.ui.graph_editor_model import GraphEditorModel
 
+from conftest import bundled_preset
+
 
 def test_add_node_assigns_incrementing_ids():
     model = GraphEditorModel()
@@ -138,6 +140,97 @@ def test_to_preset_roundtrips_through_graph_canvas_network_format():
     assert weights[(a, b)] == 4.0
     assert weights[(b, c)] == 7.0
     assert labels == {a: "A", b: "B"}
+
+
+def test_to_preset_source_pulls_from_the_real_bundled_dijkstra_preset():
+    # Single source of truth: the editor's starting template is loaded from
+    # presets/dijkstra-shortest-path.toml, not a hand-copied duplicate --
+    # so if that preset ever gains new behavior (e.g. ShowAnswer), every
+    # editor-saved network gets it too with nothing to keep in sync by hand.
+    model = GraphEditorModel()
+    a, b = model.add_node(0, 0), model.add_node(10, 0)
+    model.connect(a, b)
+    model.set_start(a)
+    model.set_goal(b)
+
+    bundled_source = bundled_preset("Dijkstra Shortest Path").source
+    assert model.to_preset("X").source == bundled_source
+    assert "ShowAnswer" in bundled_source
+
+
+def test_rename_node_sets_label():
+    model = GraphEditorModel()
+    a = model.add_node(0, 0, label="A")
+    model.rename_node(a, "Renamed")
+    assert model.nodes[a].label == "Renamed"
+
+
+def test_rename_node_accepts_any_string_including_empty():
+    model = GraphEditorModel()
+    a = model.add_node(0, 0)
+    model.rename_node(a, "Anything I want, 123!")
+    assert model.nodes[a].label == "Anything I want, 123!"
+    model.rename_node(a, "")
+    assert model.nodes[a].label == ""
+
+
+def test_rename_node_rejects_unknown_node():
+    model = GraphEditorModel()
+    with pytest.raises(ValueError, match="unknown"):
+        model.rename_node(42, "X")
+
+
+def test_load_network_hydrates_model_from_preset_shape():
+    nodes = [
+        {"id": 0, "x": 80, "y": 200, "label": "A"},
+        {"id": 1, "x": 220, "y": 80, "label": "B"},
+        {"id": 2, "x": 380, "y": 200},
+    ]
+    edges = [{"from": 0, "to": 1, "weight": 4}, {"from": 1, "to": 2, "weight": 7}]
+
+    model = GraphEditorModel()
+    model.load_network(nodes, edges, start=0, goal=2)
+
+    assert set(model.nodes) == {0, 1, 2}
+    assert model.nodes[0].label == "A"
+    assert model.nodes[2].label == ""
+    assert model.edge_between(0, 1).weight == 4.0
+    assert model.start == 0
+    assert model.goal == 2
+
+
+def test_load_network_next_id_continues_past_existing_ids():
+    # The load-bearing bug this guards: if _next_id stayed at 0 after
+    # hydrating a network with existing ids 0-5, the next add_node() would
+    # collide with id 0 and silently corrupt the graph.
+    nodes = [{"id": i, "x": i * 10, "y": 0} for i in range(6)]
+    model = GraphEditorModel()
+    model.load_network(nodes, edges=[], start=None, goal=None)
+
+    new_id = model.add_node(999, 999)
+    assert new_id == 6
+
+
+def test_from_preset_roundtrips_an_existing_network():
+    original = GraphEditorModel()
+    a, b = original.add_node(0, 0, label="A"), original.add_node(100, 0, label="B")
+    original.connect(a, b, weight=9)
+    original.set_start(a)
+    original.set_goal(b)
+    preset = original.to_preset("Roundtrip Net")
+
+    reloaded = GraphEditorModel.from_preset(preset)
+
+    assert reloaded.nodes[a].label == "A"
+    assert reloaded.edge_between(a, b).weight == 9.0
+    assert reloaded.start == a
+    assert reloaded.goal == b
+
+    # editing after reload works normally, including renaming
+    reloaded.rename_node(a, "Renamed A")
+    c = reloaded.add_node(50, 50)
+    assert c == 2  # continues past the highest existing id, not from 0
+    assert reloaded.nodes[a].label == "Renamed A"
 
 
 def test_to_preset_saved_file_reloads_with_same_shape(tmp_path):
