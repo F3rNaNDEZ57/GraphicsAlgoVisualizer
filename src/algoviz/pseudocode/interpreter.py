@@ -235,8 +235,7 @@ class Interpreter:
             operand = self._eval_expr(node.operand)
             return self._apply_unaryop(node.op, operand)
         if isinstance(node, ast.BoolOp):
-            values = [self._eval_expr(v) for v in node.values]
-            return all(values) if isinstance(node.op, ast.And) else any(values)
+            return self._eval_bool_op(node)
         if isinstance(node, ast.Compare):
             return self._eval_compare(node)
         if isinstance(node, ast.List):
@@ -269,6 +268,22 @@ class Interpreter:
                 "only direct function calls are supported", lineno=call.lineno
             )
         return call.func.id
+
+    def _eval_bool_op(self, node: ast.BoolOp) -> Any:
+        # Short-circuits like real Python and/or: for `and`, stop at the
+        # first falsy operand; for `or`, stop at the first truthy one.
+        # Evaluating every operand unconditionally (e.g. via a list
+        # comprehension) is wrong -- `left < n and Value(left) < x` must not
+        # evaluate Value(left) once `left < n` is false.
+        is_and = isinstance(node.op, ast.And)
+        result: Any = True if is_and else False
+        for value_node in node.values:
+            result = self._eval_expr(value_node)
+            if is_and and not result:
+                return result
+            if not is_and and result:
+                return result
+        return result
 
     def _eval_compare(self, node: ast.Compare) -> bool:
         left = self._eval_expr(node.left)

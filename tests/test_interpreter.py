@@ -77,6 +77,43 @@ def test_for_range_loop(recording_canvas):
     ]
 
 
+def test_and_short_circuits_and_does_not_evaluate_right_side(recording_canvas):
+    # Guard-pattern: `i < len(arr) and arr[i] > 0` must not evaluate the
+    # right side once the left side is false, or an out-of-bounds index
+    # read blows up -- exactly the shape a heap/tree bounds check needs.
+    source = "arr = [1, 2, 3]\ni = 5\nif i < 3 and arr[i] > 0:\n    PlotPixel(1, 1)\nelse:\n    PlotPixel(2, 2)\n"
+    run_all(source, recording_canvas)
+    assert recording_canvas.calls == [("plot_pixel", (2, 2), {})]
+
+
+def test_or_short_circuits_and_does_not_evaluate_right_side(recording_canvas):
+    source = "arr = [1, 2, 3]\ni = 5\nif i >= 3 or arr[i] > 0:\n    PlotPixel(1, 1)\nelse:\n    PlotPixel(2, 2)\n"
+    run_all(source, recording_canvas)
+    assert recording_canvas.calls == [("plot_pixel", (1, 1), {})]
+
+
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [(True, True, True), (True, False, False), (False, True, False), (False, False, False)],
+)
+def test_and_truth_table(recording_canvas, a, b, expected):
+    source = f"a = {a}\nb = {b}\nif a and b:\n    PlotPixel(1, 1)\nelse:\n    PlotPixel(2, 2)\n"
+    run_all(source, recording_canvas)
+    expected_pixel = (1, 1) if expected else (2, 2)
+    assert recording_canvas.calls == [("plot_pixel", expected_pixel, {})]
+
+
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [(True, True, True), (True, False, True), (False, True, True), (False, False, False)],
+)
+def test_or_truth_table(recording_canvas, a, b, expected):
+    source = f"a = {a}\nb = {b}\nif a or b:\n    PlotPixel(1, 1)\nelse:\n    PlotPixel(2, 2)\n"
+    run_all(source, recording_canvas)
+    expected_pixel = (1, 1) if expected else (2, 2)
+    assert recording_canvas.calls == [("plot_pixel", expected_pixel, {})]
+
+
 def test_list_subscript_get_and_set(recording_canvas):
     source = "arr = [10, 20, 30]\narr[1] = 99\nPlotPixel(arr[1], arr[0])\n"
     run_all(source, recording_canvas)
